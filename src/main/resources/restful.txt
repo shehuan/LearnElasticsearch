@@ -1,0 +1,303 @@
+GET _analyze
+{
+  "analyzer": "ik_smart"
+  , "text": "超级喜欢狂神说Java"
+}
+
+GET _analyze
+{
+  "analyzer": "ik_max_word"
+  , "text": "超级喜欢狂神说Java"
+}
+
+# type后边的是document的id
+PUT /test1/type1/1
+{
+  "name":"狂神说",
+  "age":3
+}
+
+PUT /test2
+{
+  "mappings": {
+    "properties": {
+      "name":{
+        "type": "text"
+      },
+      "age":{
+        "type": "integer"
+      },
+      "birthday":{
+        "type": "date"
+      }
+    }
+  }
+}
+
+# 创建，type默认为_doc
+PUT /test3/_doc/2
+{
+  "name":"狂神说2",
+  "age":3
+}
+
+# POST创建时，会生成默认id
+POST /test4/_doc/
+{
+  "name":"狂神说",
+  "age":3
+}
+
+PUT /shehuan/user/3
+{
+  "name":"王五",
+  "age":18,
+  "desc":"Java工程师",
+  "tags":["大牛","暴躁"]
+}
+
+GET shehuan
+
+GET _cat/health
+
+GET _cat/indices?v
+
+# 修改，有弊端，修改时必须传递所有字段值，否则漏掉的字段会被擦除
+PUT /test3/_doc/1
+{
+  "name":"狂神说",
+  "age":4
+}
+
+# 修改，推荐这种
+POST /test3/_doc/1/_update
+{
+  "doc": {
+    "age": 5
+  }
+}
+
+
+# 删除索引
+DELETE test4
+
+# 删除文档
+DELETE test3/_doc/2
+
+# 查询
+GET shehuan/user/3
+
+GET shehuan/user/_search?q=name:王
+
+# match会分词
+# _source过滤查询结果的字段
+# sort排序后，分值会消失
+# 分页，from，从第0条数据开始，size，查询1条数据
+GET shehuan/user/_search
+{
+  "query": {
+    "match": {
+      "name": "王五"
+    }
+  },
+  "_source": [
+    "name",
+    "age",
+    "desc"
+  ],
+  "sort": {
+    "age": {
+      "order": "desc"
+    }
+  },
+  "from": 0,
+  "size": 1
+}
+
+GET shehuan/user/_search
+{
+  "query":{
+    "match": {
+      "tags": "文 牛"
+    }
+  }
+}
+
+# bool，多条件查询
+# must，所有条件都要匹配
+GET shehuan/user/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "name": "王五"
+          }
+        },
+        {
+          "match": {
+            "age": 18
+          }
+        }
+      ]
+    }
+  }
+}
+
+# filter按指定范围
+GET shehuan/user/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "name": "王"
+          }
+        }
+      ],
+      "filter": [
+        {
+          "range": {
+            "age": {
+              "gte": 19,
+              "lte": 20
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+# should，一个条匹配即可
+GET shehuan/user/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "name": "王五"
+          }
+        },
+        {
+          "match": {
+            "age": 18
+          }
+        }
+      ]
+    }
+  }
+}
+
+# must_not，must的反面
+GET shehuan/user/_search
+{
+  "query": {
+    "bool": {
+      "must_not": [
+        {
+          "match": {
+            "name": "王五"
+          }
+        },
+        {
+          "match": {
+            "age": 18
+          }
+        }
+      ]
+    }
+  }
+}
+
+# match_phrase不分词
+GET shehuan/user/_search
+{
+  "query": {
+    "match_phrase": {
+      "name": "王五"
+    }
+  }
+}
+
+GET shehuan
+
+# term需要搭配keyword使用
+GET shehuan/user/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "name.keyword": "王五"
+          }
+        },
+        {
+          "match": {
+            "age": 18
+          }
+        }
+      ]
+    }
+  }
+}
+
+GET shehuan/user/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "term": {
+            "name.keyword": "王五"
+          }
+          , "terms": {
+            "FIELD": [
+              "VALUE1",
+              "VALUE2"
+            ]
+          }
+        },
+        {
+          "term": {
+            "name.keyword": "张三"
+          }
+        }
+      ]
+    }
+  }
+}
+
+#
+GET shehuan/user/_search
+{
+  "query": {
+    "match": {
+      "name": "王五"
+    }
+  },
+  "highlight":{
+    "pre_tags": "<span style='color:red'>",
+    "post_tags": "</span>",
+    "fields": {
+      "name": {}
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
