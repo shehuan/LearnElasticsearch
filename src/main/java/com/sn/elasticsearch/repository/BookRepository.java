@@ -1,6 +1,7 @@
 package com.sn.elasticsearch.repository;
 
-public interface BookRepository
-//        extends ElasticsearchRepository<User, String>
-{
+import com.sn.elasticsearch.bean.Book;
+import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+
+public interface BookRepository extends ElasticsearchRepository<Book, String> {
 }

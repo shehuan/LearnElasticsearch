@@ -1,12 +1,29 @@
 package com.sn.elasticsearch.bean;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+
+@Document(indexName = "book")
 public class Book {
+    private String id;
     private String skuId;
+    @Field(analyzer = "ik_max_word")
     private String name;
-    private String price;
+    private Double price;
     private String img;
+    @Field(analyzer = "ik_max_word")
     private String shop;
-    private String commentCount;
+    private Integer commentCount;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getSkuId() {
         return skuId;
@@ -24,11 +41,11 @@ public class Book {
         this.name = name;
     }
 
-    public String getPrice() {
+    public Double getPrice() {
         return price;
     }
 
-    public void setPrice(String price) {
+    public void setPrice(Double price) {
         this.price = price;
     }
 
@@ -48,11 +65,11 @@ public class Book {
         this.shop = shop;
     }
 
-    public String getCommentCount() {
+    public Integer getCommentCount() {
         return commentCount;
     }
 
-    public void setCommentCount(String commentCount) {
+    public void setCommentCount(Integer commentCount) {
         this.commentCount = commentCount;
     }
 }

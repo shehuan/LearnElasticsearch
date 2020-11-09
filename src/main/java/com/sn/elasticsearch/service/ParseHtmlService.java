@@ -25,9 +25,17 @@ public class ParseHtmlService {
         int page = 1;
         int total = 0;
         HashMap<String, Book> bookMap;
-        while (page <= maxPage) {
-            String searchUrl = "https://search.jd.com/Search?keyword=" + keyword + "&page=" + page + "&s=1&click=0";
-            try {
+        FileWriter fileWriter = null;
+        try {
+            File file = new File(System.getProperty("user.dir"), "jd_book.txt");
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            fileWriter = new FileWriter(file, true);
+
+            while (page <= maxPage) {
+                String searchUrl = "https://search.jd.com/Search?keyword=" + keyword + "&page=" + page + "&s=1&click=0";
+
                 Document document = Jsoup.connect(searchUrl).timeout(10 * 1000).headers(headers).get();
                 Elements list = document.select("ul.gl-warp.clearfix > li > div.gl-i-wrap");
                 if (list.size() == 0) {
@@ -37,7 +45,7 @@ public class ParseHtmlService {
                 StringBuilder referenceIds = new StringBuilder();
                 for (Element item : list) {
                     String name = item.select("div.p-name > a > em").get(0).text();
-                    String price = item.select("div.p-price i").text();
+                    Double price = Double.valueOf(item.select("div.p-price i").text());
                     String shop = item.select("div.p-shopnum > a").text();
                     if (StringUtils.isEmpty(shop)) {
                         shop = item.select("div.p-shop a").text();
@@ -65,11 +73,12 @@ public class ParseHtmlService {
 
                 for (int i = 0; i < jsonArray.size(); i++) {
                     String skuId = jsonArray.getJSONObject(i).getString("SkuId");
-                    String commentCountStr = jsonArray.getJSONObject(i).getString("CommentCountStr");
+                    Integer commentCount = jsonArray.getJSONObject(i).getInteger("CommentCount");
+                    // 设置评论数
+                    bookMap.get(skuId).setCommentCount(commentCount);
 
-                    bookMap.get(skuId).setCommentCount(commentCountStr);
-
-                    writeFile(JSONObject.toJSONString(bookMap.get(skuId)));
+                    fileWriter.write(JSONObject.toJSONString(bookMap.get(skuId)));
+                    fileWriter.write("\n");
 
                     System.out.println(JSONObject.toJSONString(bookMap.get(skuId)) + "\n");
                 }
@@ -78,59 +87,14 @@ public class ParseHtmlService {
                 System.out.println("page==" + page);
                 System.out.println("已采集数据条数==" + total);
                 ++page;
-                Thread.sleep(3 * 1000);
-            } catch (Exception e) {
-                e.printStackTrace();
+                Thread.sleep(2 * 1000);
             }
-        }
-    }
-
-    public void writeFile(String data) {
-
-        FileWriter fileWriter = null;
-        try {
-            File file = new File(System.getProperty("user.dir"), "jd_book.txt");
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-            fileWriter = new FileWriter(file, true);
-            fileWriter.write(data);
-            fileWriter.write("\n");
-
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
                 if (fileWriter != null) {
                     fileWriter.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void readFile() {
-        String filePath = System.getProperty("user.dir") + File.separator + "jd_book.txt";
-
-        FileReader fileReader = null;
-        BufferedReader bufferedReader = null;
-        try {
-            fileReader = new FileReader(filePath);
-            bufferedReader = new BufferedReader(fileReader);
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                System.out.println(line);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (bufferedReader != null) {
-                    bufferedReader.close();
-                }
-                if (fileReader != null) {
-                    fileReader.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();

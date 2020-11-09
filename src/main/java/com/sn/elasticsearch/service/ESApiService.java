@@ -128,7 +128,8 @@ public class ESApiService {
 
     public void searchDocument() throws IOException {
         SearchRequest searchRequest = new SearchRequest("user");
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // trackTotalHits，突破最大查询10000条的限制
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().trackTotalHits(true);
         searchSourceBuilder.highlighter(new HighlightBuilder().field("name").preTags("<span style='color:red'>").postTags("</span>"));
 //        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("name.keyword", "张三66");
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()

@@ -1,6 +1,7 @@
 package com.sn.elasticsearch;
 
 import com.sn.elasticsearch.service.ESApiService;
+import com.sn.elasticsearch.service.FileService;
 import com.sn.elasticsearch.service.ParseHtmlService;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -20,6 +21,9 @@ class LearnElasticsearchApplicationTests {
     @Autowired
     ParseHtmlService parseHtmlService;
 
+    @Autowired
+    FileService fileService;
+
     @Test
     void contextLoads() throws IOException {
 //        esApiService.createIndex();
@@ -29,13 +33,19 @@ class LearnElasticsearchApplicationTests {
 //        esApiService.updateDocument();
 //        esApiService.bulkAddDocument();
 //        esApiService.searchDocument();
-        parseHtmlService.parse("Java", 30);
-        parseHtmlService.parse("Android开发", 30);
-        parseHtmlService.parse("iOS开发", 30);
-        parseHtmlService.parse("Python", 30);
-        parseHtmlService.parse("前端", 30);
-        parseHtmlService.parse("小说", 50);
-        parseHtmlService.parse("法律", 50);
+//        parseHtmlService.parse("Java", 30);
+//        parseHtmlService.parse("Android开发", 30);
+//        parseHtmlService.parse("iOS开发", 30);
+//        parseHtmlService.parse("Python", 30);
+//        parseHtmlService.parse("前端", 30);
+//        parseHtmlService.parse("小说", 50);
+//        parseHtmlService.parse("法律", 50);
+//        parseHtmlService.parse("心理学", 30);
+//        parseHtmlService.parse("医学", 30);
+//        parseHtmlService.parse("哲学", 30);
+//        parseHtmlService.parse("诗歌", 30);
+
+        fileService.writeFileDataToES();
     }
 
 }
