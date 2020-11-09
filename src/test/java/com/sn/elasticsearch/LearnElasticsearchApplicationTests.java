@@ -29,7 +29,13 @@ class LearnElasticsearchApplicationTests {
 //        esApiService.updateDocument();
 //        esApiService.bulkAddDocument();
 //        esApiService.searchDocument();
-        parseHtmlService.parse();
+        parseHtmlService.parse("Java", 30);
+        parseHtmlService.parse("Android开发", 30);
+        parseHtmlService.parse("iOS开发", 30);
+        parseHtmlService.parse("Python", 30);
+        parseHtmlService.parse("前端", 30);
+        parseHtmlService.parse("小说", 50);
+        parseHtmlService.parse("法律", 50);
     }
 
 }

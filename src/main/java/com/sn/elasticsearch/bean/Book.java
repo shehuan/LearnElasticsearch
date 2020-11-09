@@ -1,9 +1,20 @@
 package com.sn.elasticsearch.bean;
 
 public class Book {
+    private String skuId;
     private String name;
-    private double price;
-    private String author;
+    private String price;
+    private String img;
+    private String shop;
+    private String commentCount;
+
+    public String getSkuId() {
+        return skuId;
+    }
+
+    public void setSkuId(String skuId) {
+        this.skuId = skuId;
+    }
 
     public String getName() {
         return name;
@@ -13,19 +24,35 @@ public class Book {
         this.name = name;
     }
 
-    public double getPrice() {
+    public String getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(String price) {
         this.price = price;
     }
 
-    public String getAuthor() {
-        return author;
+    public String getImg() {
+        return img;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
+    public void setImg(String img) {
+        this.img = img;
+    }
+
+    public String getShop() {
+        return shop;
+    }
+
+    public void setShop(String shop) {
+        this.shop = shop;
+    }
+
+    public String getCommentCount() {
+        return commentCount;
+    }
+
+    public void setCommentCount(String commentCount) {
+        this.commentCount = commentCount;
     }
 }
