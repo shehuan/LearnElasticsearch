@@ -1,5 +1,6 @@
 package com.sn.elasticsearch;
 
+import com.sn.elasticsearch.service.BookService;
 import com.sn.elasticsearch.service.ESApiService;
 import com.sn.elasticsearch.service.FileService;
 import com.sn.elasticsearch.service.ParseHtmlService;
@@ -24,6 +25,9 @@ class LearnElasticsearchApplicationTests {
     @Autowired
     FileService fileService;
 
+    @Autowired
+    BookService bookService;
+
     @Test
     void contextLoads() throws IOException {
 //        esApiService.createIndex();
@@ -45,7 +49,9 @@ class LearnElasticsearchApplicationTests {
 //        parseHtmlService.parse("哲学", 30);
 //        parseHtmlService.parse("诗歌", 30);
 
-        fileService.writeFileDataToES();
+//        fileService.writeFileDataToES();
+
+        bookService.searchBook("Android", 0);
     }
 
 }
