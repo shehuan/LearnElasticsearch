@@ -35,8 +35,12 @@ public class ParseHtmlService {
 
             while (page <= maxPage) {
                 String searchUrl = "https://search.jd.com/Search?keyword=" + keyword + "&page=" + page + "&s=1&click=0";
-
-                Document document = Jsoup.connect(searchUrl).timeout(10 * 1000).headers(headers).get();
+                Document document;
+                try {
+                    document = Jsoup.connect(searchUrl).timeout(60 * 1000).headers(headers).get();
+                } catch (Exception e) {
+                    continue;
+                }
                 Elements list = document.select("ul.gl-warp.clearfix > li > div.gl-i-wrap");
                 if (list.size() == 0) {
                     break;
@@ -53,12 +57,23 @@ public class ParseHtmlService {
                     String img = item.select("div.p-img > a > img").attr("data-lazy-img");
                     String skuId = item.select("div.p-commit a").attr("id").substring(10);
 
+                    String author = "";
+                    String publisher = "";
+
+                    Elements bookDetails = item.select("div.p-bookdetails");
+                    if (bookDetails != null) {
+                        author = bookDetails.select("span.p-bi-name > a").text();
+                        publisher = bookDetails.select("span.p-bi-store > a").text();
+                    }
+
                     Book book = new Book();
                     book.setName(name);
                     book.setPrice(price);
                     book.setShop(shop);
                     book.setImg(img);
                     book.setSkuId(skuId);
+                    book.setAuthor(author);
+                    book.setPublisher(publisher);
                     bookMap.put(skuId, book);
 
                     referenceIds.append(skuId).append(",");
@@ -66,8 +81,12 @@ public class ParseHtmlService {
 
                 // 请求评论数
                 String commentUrl = "https://club.jd.com/comment/productCommentSummaries.action?referenceIds=" + referenceIds;
-                String body = Jsoup.connect(commentUrl).timeout(10 * 1000).headers(headers).get().body().text();
-
+                String body = "";
+                try {
+                    body = Jsoup.connect(commentUrl).timeout(60 * 1000).headers(headers).get().body().text();
+                } catch (Exception e) {
+                    continue;
+                }
                 JSONObject jsonObject = JSONObject.parseObject(body);
                 JSONArray jsonArray = jsonObject.getJSONArray("CommentsCount");
 

@@ -11,6 +11,8 @@ public class Book {
     private String img;
     private String shop;
     private Integer commentCount;
+    private String author;
+    private String publisher;
 
     public String getId() {
         return id;
@@ -66,5 +68,21 @@ public class Book {
 
     public void setCommentCount(Integer commentCount) {
         this.commentCount = commentCount;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(String publisher) {
+        this.publisher = publisher;
     }
 }

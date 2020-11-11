@@ -37,21 +37,24 @@ class LearnElasticsearchApplicationTests {
 //        esApiService.updateDocument();
 //        esApiService.bulkAddDocument();
 //        esApiService.searchDocument();
-//        parseHtmlService.parse("Java", 30);
-//        parseHtmlService.parse("Android开发", 30);
-//        parseHtmlService.parse("iOS开发", 30);
-//        parseHtmlService.parse("Python", 30);
-//        parseHtmlService.parse("前端", 30);
-//        parseHtmlService.parse("小说", 50);
-//        parseHtmlService.parse("法律", 50);
-//        parseHtmlService.parse("心理学", 30);
-//        parseHtmlService.parse("医学", 30);
-//        parseHtmlService.parse("哲学", 30);
-//        parseHtmlService.parse("诗歌", 30);
+
+//        parseHtmlService.parse("小说", 400);
+//        parseHtmlService.parse("Java开发", 30);
+//        parseHtmlService.parse("Android开发", 20);
+//        parseHtmlService.parse("iOS开发", 20);
+//        parseHtmlService.parse("Python开发", 20);
+//        parseHtmlService.parse("前端开发", 20);
+//        parseHtmlService.parse("诗词", 30);
+//        parseHtmlService.parse("法律", 30);
+//        parseHtmlService.parse("军事", 30);
+//        parseHtmlService.parse("经济", 30);
+//        parseHtmlService.parse("历史", 30);
+
+//        fileService.removeSameData();
 
 //        fileService.writeFileDataToES();
 
-        bookService.searchBook("Android", 0);
+        bookService.searchBook("艺术探索", 0);
     }
 
 }
