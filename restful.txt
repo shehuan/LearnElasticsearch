@@ -289,7 +289,13 @@ GET shehuan/user/_search
   }
 }
 
-
+# 设置查询时可以最大返回的数据记录数，默认10000
+PUT shehuan/_settings
+{
+	"index": {
+		"max_result_window": 1000000
+	}
+}
 
 
 
