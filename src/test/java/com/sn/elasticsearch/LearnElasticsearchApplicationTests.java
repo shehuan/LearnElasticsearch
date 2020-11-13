@@ -54,7 +54,7 @@ class LearnElasticsearchApplicationTests {
 
 //        fileService.writeFileDataToES();
 
-        bookService.queryBook("莫言", 0, 100);
+        bookService.queryBook2("小灰", 0, 100);
     }
 
 }

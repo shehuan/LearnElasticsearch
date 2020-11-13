@@ -43,7 +43,7 @@ public class BookService {
                 .must(QueryBuilders.boolQuery().should(QueryBuilders.matchPhraseQuery("author", keyword))
                         .should(QueryBuilders.matchPhraseQuery("name", keyword)))
 //                boolQueryBuilder.must(new MatchPhraseQueryBuilder("name", keyword))
-                .must(QueryBuilders.rangeQuery("commentCount").gte(1000));
+                .must(QueryBuilders.rangeQuery("commentCount").gte(100));
 
         HighlightBuilder highlightBuilder = new HighlightBuilder()
                 .field("author").field("name")
@@ -93,28 +93,37 @@ public class BookService {
                 .must(QueryBuilders.boolQuery().should(QueryBuilders.matchPhraseQuery("author", keyword))
                         .should(QueryBuilders.matchPhraseQuery("name", keyword)))
 //                boolQueryBuilder.must(new MatchPhraseQueryBuilder("name", keyword))
-                .must(QueryBuilders.rangeQuery("commentCount").gte(1000));
+                .must(QueryBuilders.rangeQuery("commentCount").gte(100));
 
         HighlightBuilder.Field hbf1 = new HighlightBuilder.Field("author")
                 .preTags("<span style='color:red'>")
                 .postTags("</span>")
-                .fragmentSize(10)
+                .fragmentSize(10000)
                 .numOfFragments(0);
 
         HighlightBuilder.Field hbf2 = new HighlightBuilder.Field("name")
                 .preTags("<span style='color:red'>")
                 .postTags("</span>")
-                .fragmentSize(10)
+                .fragmentSize(10000)
                 .numOfFragments(0);
 
         HighlightBuilder.Field[] hbfArray = new HighlightBuilder.Field[]{hbf1, hbf2};
+
+        HighlightBuilder highlightBuilder = new HighlightBuilder()
+                .field("author").field("name")
+                .preTags("<p>","<span style='color:red'>")
+                .postTags("</p>","</span>")
+                // 如果要高亮显示的字段内容很多,需要如下配置,避免高亮显示不全、内容缺失
+                .fragmentSize(1000) // 最大高亮分片数
+                .numOfFragments(0);// 从第一个分片获取高亮片段
 
         NativeSearchQuery nativeSearchQuery = new NativeSearchQueryBuilder()
                 .withQuery(boolQueryBuilder)
                 .withPageable(PageRequest.of(pageNum, pageSize))
                 .withFields("author", "name", "price", "commentCount")
                 .withSort(new FieldSortBuilder("price").order(SortOrder.ASC))
-                .withHighlightFields(hbfArray)
+//                .withHighlightFields(hbfArray)
+                .withHighlightBuilder(highlightBuilder)
                 .build();
 
         SearchHits<Book> search = elasticsearchRestTemplate.search(nativeSearchQuery, Book.class);

@@ -7,12 +7,12 @@ public class Book {
     private String id;
     private String skuId;
     private String name;
-    private Double price;
-    private String img;
-    private String shop;
-    private Integer commentCount;
     private String author;
+    private Double price;
+    private Integer commentCount;
+    private String shop;
     private String publisher;
+    private String img;
 
     public String getId() {
         return id;
@@ -38,28 +38,20 @@ public class Book {
         this.name = name;
     }
 
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
     public Double getPrice() {
         return price;
     }
 
     public void setPrice(Double price) {
         this.price = price;
-    }
-
-    public String getImg() {
-        return img;
-    }
-
-    public void setImg(String img) {
-        this.img = img;
-    }
-
-    public String getShop() {
-        return shop;
-    }
-
-    public void setShop(String shop) {
-        this.shop = shop;
     }
 
     public Integer getCommentCount() {
@@ -70,12 +62,12 @@ public class Book {
         this.commentCount = commentCount;
     }
 
-    public String getAuthor() {
-        return author;
+    public String getShop() {
+        return shop;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
+    public void setShop(String shop) {
+        this.shop = shop;
     }
 
     public String getPublisher() {
@@ -84,5 +76,13 @@ public class Book {
 
     public void setPublisher(String publisher) {
         this.publisher = publisher;
+    }
+
+    public String getImg() {
+        return img;
+    }
+
+    public void setImg(String img) {
+        this.img = img;
     }
 }
