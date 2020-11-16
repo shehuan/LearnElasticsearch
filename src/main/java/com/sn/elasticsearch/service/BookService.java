@@ -6,9 +6,12 @@ import com.sn.elasticsearch.repository.BookRepository;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
+import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.metrics.AvgAggregationBuilder;
-import org.elasticsearch.search.aggregations.metrics.ParsedAvg;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.*;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -60,7 +63,7 @@ public class BookService {
         nativeSearchQuery.addSort(Sort.by("price").ascending());
         nativeSearchQuery.setHighlightQuery(highlightQuery);
 
-        AvgAggregationBuilder priceAvgAggregation = AggregationBuilders.avg("avgPrice").field("price");
+        AvgAggregationBuilder priceAvgAggregation = AggregationBuilders.avg("avg_price").field("price");
         List<AbstractAggregationBuilder> aggregations = new ArrayList<>();
         aggregations.add(priceAvgAggregation);
         nativeSearchQuery.setAggregations(aggregations);
@@ -72,7 +75,7 @@ public class BookService {
         System.out.println("命中数据条数：" + search.getTotalHits());
         System.out.println("总页数：" + totalPage);
 
-        double avgPrice = ((ParsedAvg) search.getAggregations().asMap().get("avgPrice")).getValue();
+        double avgPrice = ((Avg) search.getAggregations().get("avg_price")).getValue();
         System.out.println("搜索到的书籍均价：" + avgPrice);
 
         for (SearchHit<Book> searchHit : search.getSearchHits()) {
@@ -111,8 +114,8 @@ public class BookService {
 
         HighlightBuilder highlightBuilder = new HighlightBuilder()
                 .field("author").field("name")
-                .preTags("<p>","<span style='color:red'>")
-                .postTags("</p>","</span>")
+                .preTags("<p>", "<span style='color:red'>")
+                .postTags("</p>", "</span>")
                 // 如果要高亮显示的字段内容很多,需要如下配置,避免高亮显示不全、内容缺失
                 .fragmentSize(1000) // 最大高亮分片数
                 .numOfFragments(0);// 从第一个分片获取高亮片段
@@ -148,9 +151,35 @@ public class BookService {
     }
 
     public void aggregation() {
-//        AvgAggregationBuilder priceAvgAggregation = AggregationBuilders.avg("price2").field("price");
-//        List<AbstractAggregationBuilder> aggregations = new ArrayList<>();
-//        aggregations.add(priceAvgAggregation);
-//        nativeSearchQuery.setAggregations(aggregations);
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery().mustNot(QueryBuilders.matchQuery("author.keyword", ""));
+        NativeSearchQuery nativeSearchQuery = new NativeSearchQuery(boolQueryBuilder);
+        // 根据作者姓名进行分组统计，统计出的别名叫group_author
+        TermsAggregationBuilder termsAggregationBuilder = AggregationBuilders.terms("group_author").field("author.keyword").size(1000);
+        AvgAggregationBuilder avgAggregationBuilder = AggregationBuilders.avg("avg_price").field("price");
+        MaxAggregationBuilder maxAggregationBuilder = AggregationBuilders.max("max_price").field("price");
+        MinAggregationBuilder minAggregationBuilder = AggregationBuilders.min("min_price").field("price");
+        termsAggregationBuilder.subAggregation(avgAggregationBuilder);
+        termsAggregationBuilder.subAggregation(maxAggregationBuilder);
+        termsAggregationBuilder.subAggregation(minAggregationBuilder);
+
+        List<AbstractAggregationBuilder> aggregations = new ArrayList<>();
+        aggregations.add(termsAggregationBuilder);
+        nativeSearchQuery.setAggregations(aggregations);
+        SearchHits<Book> search = elasticsearchRestTemplate.search(nativeSearchQuery, Book.class);
+
+        Terms terms = search.getAggregations().get("group_author");
+
+        for (Terms.Bucket bucket : terms.getBuckets()) {
+            Avg avg = bucket.getAggregations().get("avg_price");
+            Max max = bucket.getAggregations().get("max_price");
+            Min min = bucket.getAggregations().get("min_price");
+
+            System.out.println("作者：" + bucket.getKeyAsString() + "\n" +
+                    "作品数：" + bucket.getDocCount() + "\n" +
+                    "均价：" + avg.getValue() + "\n" +
+                    "最高价：" + max.getValue() + "\n" +
+                    "最低价：" + min.getValue());
+            System.out.println("--------------------------------------------");
+        }
     }
 }
