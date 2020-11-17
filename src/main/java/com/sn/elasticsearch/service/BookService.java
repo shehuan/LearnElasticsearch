@@ -5,6 +5,7 @@ import com.sn.elasticsearch.bean.Book;
 import com.sn.elasticsearch.repository.BookRepository;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.BucketOrder;
@@ -156,17 +157,28 @@ public class BookService {
         NativeSearchQuery nativeSearchQuery = new NativeSearchQuery(boolQueryBuilder);
         // 根据作者姓名进行分组统计，统计出的别名叫group_author
         TermsAggregationBuilder termsAggregationBuilder = AggregationBuilders.terms("group_author").field("author.keyword");
+        // 统计组内书籍的均价
         AvgAggregationBuilder avgAggregationBuilder = AggregationBuilders.avg("avg_price").field("price");
+        // 统计组内书籍的最高价
         MaxAggregationBuilder maxAggregationBuilder = AggregationBuilders.max("max_price").field("price");
+        // 统计组内书籍的最低价
         MinAggregationBuilder minAggregationBuilder = AggregationBuilders.min("min_price").field("price");
+        // 统计组内书籍的数量
         ValueCountAggregationBuilder valueCountAggregationBuilder = AggregationBuilders.count("book_count").field("author.keyword");
-        RangeAggregationBuilder rangeAggregationBuilder = AggregationBuilders.range("comment_count").field("commentCount").addRange(100, 10000);
+        // 统计组内在各个评论数区间的书籍数量
+        RangeAggregationBuilder rangeAggregationBuilder = AggregationBuilders.range("comment_count")
+                .field("commentCount")
+                .addUnboundedTo(100)//(0, 100)
+                .addRange(100, 1000)//[100,1000]
+                .addUnboundedFrom(1000);//(100,+∞)
         termsAggregationBuilder.subAggregation(avgAggregationBuilder);
         termsAggregationBuilder.subAggregation(maxAggregationBuilder);
         termsAggregationBuilder.subAggregation(minAggregationBuilder);
         termsAggregationBuilder.subAggregation(valueCountAggregationBuilder);
         termsAggregationBuilder.subAggregation(rangeAggregationBuilder);
-        termsAggregationBuilder.order(BucketOrder.aggregation("book_count", false)).size(1000);
+        termsAggregationBuilder
+                .order(BucketOrder.aggregation("book_count", false))// 按照每组的书籍数量降序排列
+                .size(1000);// 最多统计1000组
 
         List<AbstractAggregationBuilder> aggregations = new ArrayList<>();
         aggregations.add(termsAggregationBuilder);
@@ -183,10 +195,14 @@ public class BookService {
             Range range = bucket.getAggregations().get("comment_count");
 
             System.out.println("作者：" + bucket.getKeyAsString() + "\n" +
-                    "作品数：" + bucket.getDocCount() + "\n" +
+                    "书籍数量：" + bucket.getDocCount() + "\n" +
                     "均价：" + avg.getValue() + "\n" +
                     "最高价：" + max.getValue() + "\n" +
                     "最低价：" + min.getValue());
+
+            for (Range.Bucket rangeBucket : range.getBuckets()) {
+                System.out.println("评论数区间：" + rangeBucket.getKeyAsString() + "的作品数" + rangeBucket.getDocCount());
+            }
             System.out.println("--------------------------------------------");
         }
     }
