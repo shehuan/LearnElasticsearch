@@ -54,9 +54,9 @@ class LearnElasticsearchApplicationTests {
 
 //        fileService.writeFileDataToES();
 
-        bookService.queryBook("刘慈欣", 0, 20);
+//        bookService.queryBook("刘慈欣", 0, 20);
 
-//        bookService.aggregation();
+        bookService.aggregation();
     }
 
 }

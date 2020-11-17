@@ -6,9 +6,10 @@ import com.sn.elasticsearch.repository.BookRepository;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
-import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
+import org.elasticsearch.search.aggregations.BucketOrder;
+import org.elasticsearch.search.aggregations.bucket.range.Range;
+import org.elasticsearch.search.aggregations.bucket.range.RangeAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.aggregations.metrics.*;
@@ -154,13 +155,18 @@ public class BookService {
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery().mustNot(QueryBuilders.matchQuery("author.keyword", ""));
         NativeSearchQuery nativeSearchQuery = new NativeSearchQuery(boolQueryBuilder);
         // 根据作者姓名进行分组统计，统计出的别名叫group_author
-        TermsAggregationBuilder termsAggregationBuilder = AggregationBuilders.terms("group_author").field("author.keyword").size(1000);
+        TermsAggregationBuilder termsAggregationBuilder = AggregationBuilders.terms("group_author").field("author.keyword");
         AvgAggregationBuilder avgAggregationBuilder = AggregationBuilders.avg("avg_price").field("price");
         MaxAggregationBuilder maxAggregationBuilder = AggregationBuilders.max("max_price").field("price");
         MinAggregationBuilder minAggregationBuilder = AggregationBuilders.min("min_price").field("price");
+        ValueCountAggregationBuilder valueCountAggregationBuilder = AggregationBuilders.count("book_count").field("author.keyword");
+        RangeAggregationBuilder rangeAggregationBuilder = AggregationBuilders.range("comment_count").field("commentCount").addRange(100, 10000);
         termsAggregationBuilder.subAggregation(avgAggregationBuilder);
         termsAggregationBuilder.subAggregation(maxAggregationBuilder);
         termsAggregationBuilder.subAggregation(minAggregationBuilder);
+        termsAggregationBuilder.subAggregation(valueCountAggregationBuilder);
+        termsAggregationBuilder.subAggregation(rangeAggregationBuilder);
+        termsAggregationBuilder.order(BucketOrder.aggregation("book_count", false)).size(1000);
 
         List<AbstractAggregationBuilder> aggregations = new ArrayList<>();
         aggregations.add(termsAggregationBuilder);
@@ -173,6 +179,8 @@ public class BookService {
             Avg avg = bucket.getAggregations().get("avg_price");
             Max max = bucket.getAggregations().get("max_price");
             Min min = bucket.getAggregations().get("min_price");
+            ValueCount count = bucket.getAggregations().get("book_count");
+            Range range = bucket.getAggregations().get("comment_count");
 
             System.out.println("作者：" + bucket.getKeyAsString() + "\n" +
                     "作品数：" + bucket.getDocCount() + "\n" +
