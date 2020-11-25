@@ -10,57 +10,57 @@ GET _analyze
   , "text": "超级喜欢狂神说Java"
 }
 
-# type后边的是document的id
-PUT /test1/type1/1
-{
-  "name":"狂神说",
-  "age":3
-}
+PUT user
 
-PUT /test2
+PUT user
 {
-  "mappings": {
-    "properties": {
-      "name":{
-        "type": "text"
-      },
-      "age":{
-        "type": "integer"
-      },
-      "birthday":{
-        "type": "date"
-      }
+  "settings": {
+    "index": {
+      "number_of_shards": 2,
+      "number_of_replicas": 2
     }
   }
 }
 
-# 创建，type默认为_doc
-PUT /test3/_doc/2
+POST user/_doc/2
 {
-  "name":"狂神说2",
-  "age":3
+  "name": "马老师",
+  "age": 30,
+  "label": [
+    "不讲武德",
+    "耗子尾汁"
+  ]
 }
 
-# POST创建时，会生成默认id
-POST /test4/_doc/
+DELETE user/_doc/1
+
+GET user
+
+PUT user/_settings
 {
-  "name":"狂神说",
-  "age":3
+  "blocks.write": false,
+  "blocks.read": false
 }
 
-PUT /shehuan/user/3
+GET user/_doc/1
+
+POST user/_close
+
+POST user/_open
+
+POST /_aliases
 {
-  "name":"王五",
-  "age":18,
-  "desc":"Java工程师",
-  "tags":["大牛","暴躁"]
+  "actions": [
+    {
+      "add": {
+        "index": "user",
+        "alias": "user_alias"
+      }
+    }
+  ]
 }
 
-GET shehuan
-
-GET _cat/health
-
-GET _cat/indices?v
+DELETE user
 
 # 修改，有弊端，修改时必须传递所有字段值，否则漏掉的字段会被擦除
 PUT /test3/_doc/1
