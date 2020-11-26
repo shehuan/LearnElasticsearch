@@ -109,6 +109,16 @@ POST user/_doc/5
   ]
 }
 
+POST user/_doc/6
+{
+  "name": "王者荣耀",
+  "age": 2,
+  "label": [
+    "游戏",
+    "好玩"
+  ]
+}
+
 POST user/_update/1
 {
   "doc": {
@@ -123,7 +133,7 @@ POST user/_update/1
   }
 }
 
-DELETE user/_doc/1
+DELETE user/_doc/ROv3BHYBLyRK40MDTaTA
 
 POST user/_delete_by_query
 {
@@ -174,11 +184,8 @@ GET user/_search
 GET user/_search
 {
   "query": {
-    "multi_match": {
-      "query": "王",
-      "fields": ["name","label"],
-      "type": "most_fields",
-      "operator": "and"
+    "term": {
+      "name.keyword": "王重阳"
     }
   }
 }
@@ -186,11 +193,75 @@ GET user/_search
 GET user/_search
 {
   "query": {
-    "term": {
-      "name.keyword": "王重阳"
+    "multi_match": {
+      "query": "王者荣耀",
+      "fields": ["name","label"]
     }
   }
 }
+
+GET user/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "王者荣耀",
+      "fields": ["name.keyword","label.keyword"]
+    }
+  }
+}
+
+GET user/_search
+{
+  "query": {
+    "range": {
+      "age": {
+        "gte": 10,
+        "lte": 40
+      }
+    }
+  }
+}
+
+GET user/_search
+{
+  "query": {
+    "range": {
+      "age": {
+        "gte": 10,
+        "lte": 40
+      }
+    }
+  },
+  "sort": [
+    {
+      "age": {
+        "order": "asc"
+      }
+    }
+  ]
+}
+
+GET user/_search
+{
+  "query": {
+    "range": {
+      "age": {
+        "gte": 10,
+        "lte": 40
+      }
+    }
+  },
+  "sort": [
+    {
+      "age": {
+        "order": "asc"
+      }
+    }
+  ],
+  "from": 1,
+  "size": 2
+}
+
 
 https://blog.csdn.net/tanga842428/article/details/75127418
 
