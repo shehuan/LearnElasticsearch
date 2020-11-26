@@ -1,13 +1,13 @@
 GET _analyze
 {
   "analyzer": "ik_smart"
-  , "text": "超级喜欢狂神说Java"
+  , "text": "耗子尾汁"
 }
 
 GET _analyze
 {
   "analyzer": "ik_max_word"
-  , "text": "超级喜欢狂神说Java"
+  , "text": "耗子尾汁"
 }
 
 PUT user
@@ -22,17 +22,15 @@ PUT user
   }
 }
 
-POST user/_doc/2
+POST user/_doc/1
 {
-  "name": "马老师",
+  "name": "张三",
   "age": 30,
   "label": [
     "不讲武德",
     "耗子尾汁"
   ]
 }
-
-DELETE user/_doc/1
 
 GET user
 
@@ -41,8 +39,6 @@ PUT user/_settings
   "blocks.write": false,
   "blocks.read": false
 }
-
-GET user/_doc/1
 
 POST user/_close
 
@@ -62,34 +58,142 @@ POST /_aliases
 
 DELETE user
 
-# 修改，有弊端，修改时必须传递所有字段值，否则漏掉的字段会被擦除
-PUT /test3/_doc/1
+POST user/_doc
 {
-  "name":"狂神说",
-  "age":4
+  "name": "李四",
+  "age": 18,
+  "label": [
+    "篮球",
+    "Rap"
+  ]
 }
 
-# 修改，推荐这种
-POST /test3/_doc/1/_update
+PUT user/_doc/2
+{
+  "name": "王五",
+  "age": 25,
+  "label": [
+    "打工人",
+    "宅男",
+    "王者荣耀"
+  ]
+}
+
+POST user/_doc/3
+{
+  "name": "赵六",
+  "age": 43,
+  "label": [
+    "脱口秀",
+    "直播带货"
+  ]
+}
+
+POST user/_doc/4
+{
+  "name": "张三丰",
+  "age": 80,
+  "label": [
+    "武当山",
+    "太极"
+  ]
+}
+
+POST user/_doc/5
+{
+  "name": "王重阳",
+  "age": 70,
+  "label": [
+    "终南山",
+    "全真教"
+  ]
+}
+
+POST user/_update/1
 {
   "doc": {
-    "age": 5
+    "age": 31
   }
 }
 
+POST user/_update/1
+{
+  "doc": {
+    "school": "清华"
+  }
+}
 
-# 删除索引
-DELETE test4
+DELETE user/_doc/1
 
-# 删除文档
-DELETE test3/_doc/2
+POST user/_delete_by_query
+{
+  "query": {
+    "term": {
+      "name.keyword": "王重阳"
+    }
+  }
+}
 
-# 查询
-GET shehuan/user/3
+POST user/_delete_by_query
+{
+  "query": {
+    "term": {
+      "age": 70
+    }
+  }
+}
 
-GET shehuan/user/_search?q=name:王
+GET user/_doc/1
 
-# match会分词
+GET user/_search?q=name:王重阳
+
+GET user/_search?q=name.keyword:王重阳
+
+GET user/_search?q=age:70
+
+GET user/_search
+
+GET user/_search
+{
+  "query": {
+    "match": {
+      "name": "王重阳"
+    }
+  }
+}
+
+GET user/_search
+{
+  "query": {
+    "match_phrase": {
+      "name": "王重阳"
+    }
+  }
+}
+
+GET user/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "王",
+      "fields": ["name","label"],
+      "type": "most_fields",
+      "operator": "and"
+    }
+  }
+}
+
+GET user/_search
+{
+  "query": {
+    "term": {
+      "name.keyword": "王重阳"
+    }
+  }
+}
+
+https://blog.csdn.net/tanga842428/article/details/75127418
+
 # _source过滤查询结果的字段
 # sort排序后，分值会消失
 # 分页，from，从第0条数据开始，size，查询1条数据
