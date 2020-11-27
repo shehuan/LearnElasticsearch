@@ -133,7 +133,7 @@ POST user/_update/1
   }
 }
 
-DELETE user/_doc/ROv3BHYBLyRK40MDTaTA
+DELETE user/_doc/1
 
 POST user/_delete_by_query
 {
@@ -262,82 +262,21 @@ GET user/_search
   "size": 2
 }
 
-
-https://blog.csdn.net/tanga842428/article/details/75127418
-
-# _source过滤查询结果的字段
-# sort排序后，分值会消失
-# 分页，from，从第0条数据开始，size，查询1条数据
-GET shehuan/user/_search
-{
-  "query": {
-    "match": {
-      "name": "王五"
-    }
-  },
-  "_source": [
-    "name",
-    "age",
-    "desc"
-  ],
-  "sort": {
-    "age": {
-      "order": "desc"
-    }
-  },
-  "from": 0,
-  "size": 1
-}
-
-GET shehuan/user/_search
-{
-  "query":{
-    "match": {
-      "tags": "文 牛"
-    }
-  }
-}
-
-# bool，多条件查询
-# must，所有条件都要匹配
-GET shehuan/user/_search
+GET user/_search
 {
   "query": {
     "bool": {
       "must": [
         {
-          "match": {
-            "name": "王五"
+          "match_phrase_prefix": {
+            "name": "王"
           }
         },
         {
-          "match": {
-            "age": 18
-          }
-        }
-      ]
-    }
-  }
-}
-
-# filter按指定范围
-GET shehuan/user/_search
-{
-  "query": {
-    "bool": {
-      "must": [
-        {
-          "match": {
-            "name": "王"
-          }
-        }
-      ],
-      "filter": [
-        {
           "range": {
             "age": {
-              "gte": 19,
-              "lte": 20
+              "gte": 10,
+              "lte": 40
             }
           }
         }
@@ -346,41 +285,22 @@ GET shehuan/user/_search
   }
 }
 
-# should，一个条匹配即可
-GET shehuan/user/_search
-{
-  "query": {
-    "bool": {
-      "should": [
-        {
-          "match": {
-            "name": "王五"
-          }
-        },
-        {
-          "match": {
-            "age": 18
-          }
-        }
-      ]
-    }
-  }
-}
-
-# must_not，must的反面
-GET shehuan/user/_search
+GET user/_search
 {
   "query": {
     "bool": {
       "must_not": [
         {
-          "match": {
-            "name": "王五"
+          "match_phrase_prefix": {
+            "name": "王"
           }
         },
         {
-          "match": {
-            "age": 18
+          "range": {
+            "age": {
+              "gte": 10,
+              "lte": 40
+            }
           }
         }
       ]
@@ -388,58 +308,22 @@ GET shehuan/user/_search
   }
 }
 
-# match_phrase不分词
-GET shehuan/user/_search
-{
-  "query": {
-    "match_phrase": {
-      "name": "王五"
-    }
-  }
-}
-
-GET shehuan
-
-# term需要搭配keyword使用
-GET shehuan/user/_search
-{
-  "query": {
-    "bool": {
-      "must": [
-        {
-          "term": {
-            "name.keyword": "王五"
-          }
-        },
-        {
-          "match": {
-            "age": 18
-          }
-        }
-      ]
-    }
-  }
-}
-
-GET shehuan/user/_search
+GET user/_search
 {
   "query": {
     "bool": {
       "should": [
         {
-          "term": {
-            "name.keyword": "王五"
-          }
-          , "terms": {
-            "FIELD": [
-              "VALUE1",
-              "VALUE2"
-            ]
+          "match_phrase_prefix": {
+            "name": "王"
           }
         },
         {
-          "term": {
-            "name.keyword": "张三"
+          "range": {
+            "age": {
+              "gte": 10,
+              "lte": 40
+            }
           }
         }
       ]
@@ -447,12 +331,44 @@ GET shehuan/user/_search
   }
 }
 
-#
-GET shehuan/user/_search
+GET user/_search
 {
   "query": {
-    "match": {
-      "name": "王五"
+    "bool": {
+      "filter": [
+        {
+          "match_phrase_prefix": {
+            "name": "王"
+          }
+        },
+        {
+          "range": {
+            "age": {
+              "gte": 10,
+              "lte": 40
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+GET user/_search
+{
+  "query": {
+    "match_phrase": {
+      "name": "王重阳"
+    }
+  },
+  "_source": ["name","age"]
+}
+
+GET user/_search
+{
+  "query": {
+    "match_phrase_prefix": {
+      "name": "王"
     }
   },
   "highlight":{
@@ -463,6 +379,35 @@ GET shehuan/user/_search
     }
   }
 }
+
+GET user/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "match_phrase_prefix": {
+            "name": "王"
+          }
+        },
+        {
+          "match": {
+            "label": "王"
+          }
+        }
+      ]
+    }
+  },
+  "highlight": {
+    "pre_tags": "<span style='color:red'>",
+    "post_tags": "</span>",
+    "fields": {
+      "name": {},
+      "label": {}
+    }
+  }
+}
+
 
 # 设置查询时可以最大返回的数据记录数，默认10000
 PUT shehuan/_settings
