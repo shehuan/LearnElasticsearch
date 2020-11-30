@@ -418,6 +418,42 @@ PUT shehuan/_settings
 }
 
 
+PUT blog
+
+DELETE blog
+
+DELETE blog/_doc/-SPKF3YBxQAQE6x3ipWQ
+
+PUT blog
+{
+  "mappings": {
+    "properties": {
+      "publishDate":{
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+      }
+    }
+  }
+}
+
+POST blog/_doc
+{
+  "title": "Learn Elastcsearch",
+  "publishDate": "2020-12-01 20:10:15",
+  "isTop": true,
+  "score": 4.5,
+  "commnetNum": 50,
+  "label": [
+    "Elastcsearch",
+    "7.9.3版本"
+  ],
+  "author": {
+    "name": "shehuan",
+    "github": "https://github.com/shehuan"
+  }
+}
+
+
 
 
 
