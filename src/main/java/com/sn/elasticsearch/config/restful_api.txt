@@ -384,7 +384,7 @@ GET user/_search
 {
   "query": {
     "bool": {
-      "should": [
+      "must": [
         {
           "match_phrase_prefix": {
             "name": "王"
@@ -408,29 +408,80 @@ GET user/_search
   }
 }
 
-
-# 设置查询时可以最大返回的数据记录数，默认10000
-PUT shehuan/_settings
+GET user/_search
 {
-	"index": {
-		"max_result_window": 1000000
-	}
+  "aggs": {
+    "avg_age": {
+      "avg": {
+        "field": "age"
+      }
+    },
+    "max_age": {
+      "max": {
+        "field": "age"
+      }
+    },
+    "min_age": {
+      "min": {
+        "field": "age"
+      }
+    },
+    "range_age": {
+      "range": {
+        "field": "age",
+        "ranges": [
+          {
+            "from": 0,
+            "to": 20
+          },
+          {
+            "from": 20,
+            "to": 40
+          },
+          {
+            "from": 40,
+            "to": 100
+          }
+        ]
+      }
+    },
+    "wang_name": {
+      "filter": {
+        "match_phrase_prefix": {
+          "name": "王"
+        }
+      }
+    },
+    "group_school":{
+      "terms": {
+        "field": "school.keyword",
+        "size": 10
+      },
+      "aggs": {
+        "min_age": {
+          "min": {
+            "field": "age"
+          }
+        }
+      }
+    }
+  }
 }
-
 
 PUT blog
 
 DELETE blog
 
-DELETE blog/_doc/-SPKF3YBxQAQE6x3ipWQ
-
 PUT blog
 {
   "mappings": {
     "properties": {
-      "publishDate":{
+      "publishDate": {
         "type": "date",
         "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+      },
+      "reader_age_range": {
+        "type": "integer_range"
       }
     }
   }
@@ -450,11 +501,22 @@ POST blog/_doc
   "author": {
     "name": "shehuan",
     "github": "https://github.com/shehuan"
+  },
+  "reader_age_range": {
+    "gte": 10,
+    "lte": 50
   }
 }
 
+GET blog/_mapping?pretty
 
-
+# 设置查询时可以最大返回的数据记录数，默认10000
+PUT shehuan/_settings
+{
+	"index": {
+		"max_result_window": 1000000
+	}
+}
 
 
 
