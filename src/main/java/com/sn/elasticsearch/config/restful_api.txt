@@ -1,15 +1,3 @@
-GET _analyze
-{
-  "analyzer": "ik_smart"
-  , "text": "耗子尾汁"
-}
-
-GET _analyze
-{
-  "analyzer": "ik_max_word"
-  , "text": "耗子尾汁"
-}
-
 PUT user
 
 PUT user
@@ -509,6 +497,71 @@ POST blog/_doc
 }
 
 GET blog/_mapping?pretty
+
+GET _analyze
+{
+  "text": "Hello World"
+}
+
+GET _analyze
+{
+  "analyzer": "ik_smart",
+  "text": "你好世界"
+}
+
+PUT test
+
+PUT test
+{
+  "mappings": {
+    "properties": {
+      "content":{
+        "type": "text",
+        "analyzer": "ik_smart"
+      }
+    }
+  }
+}
+
+DELETE test
+
+POST test/_doc
+{
+  "content": "Hello World"
+}
+
+POST test/_doc
+{
+  "content": "你好世界"
+}
+
+POST test/_doc
+{
+  "content": "好好学习"
+}
+
+POST test/_doc
+{
+  "content": "耗子尾汁"
+}
+
+GET test/_search
+{
+  "query": {
+    "match": {
+      "content": "hello"
+    }
+  }
+}
+
+GET test/_search
+{
+  "query": {
+    "match": {
+      "content": "你好"
+    }
+  }
+}
 
 # 设置查询时可以最大返回的数据记录数，默认10000
 PUT shehuan/_settings
