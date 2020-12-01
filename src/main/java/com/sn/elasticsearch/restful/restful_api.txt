@@ -509,6 +509,18 @@ GET _analyze
   "text": "你好世界"
 }
 
+GET _analyze
+{
+  "analyzer": "ik_smart",
+  "text": "索检文全"
+}
+
+GET _analyze
+{
+  "analyzer": "ik_smart",
+  "text": "擎引索搜"
+}
+
 PUT test
 
 PUT test
@@ -542,7 +554,12 @@ POST test/_doc
 
 POST test/_doc
 {
-  "content": "耗子尾汁"
+  "content": "索检文全"
+}
+
+POST test/_doc
+{
+  "content": "擎引索搜"
 }
 
 GET test/_search
@@ -559,6 +576,15 @@ GET test/_search
   "query": {
     "match": {
       "content": "你好"
+    }
+  }
+}
+
+GET test/_search
+{
+  "query": {
+    "match": {
+      "content": "索检文全"
     }
   }
 }
