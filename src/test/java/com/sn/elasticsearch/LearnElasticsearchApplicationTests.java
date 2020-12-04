@@ -1,7 +1,7 @@
 package com.sn.elasticsearch;
 
 import com.sn.elasticsearch.service.BookService;
-import com.sn.elasticsearch.service.ESApiService;
+import com.sn.elasticsearch.service.UserService;
 import com.sn.elasticsearch.service.FileService;
 import com.sn.elasticsearch.service.ParseHtmlService;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,7 @@ import java.io.IOException;
 class LearnElasticsearchApplicationTests {
 
     @Autowired
-    ESApiService esApiService;
+    UserService userService;
 
     @Autowired
     ParseHtmlService parseHtmlService;
@@ -30,13 +30,14 @@ class LearnElasticsearchApplicationTests {
 
     @Test
     void contextLoads() throws IOException {
-//        esApiService.createIndex();
-//        esApiService.deleteIndex();
-//        esApiService.addDocument();
-//        esApiService.getDocument();
-//        esApiService.updateDocument();
-//        esApiService.bulkAddDocument();
-//        esApiService.searchDocument();
+//        userService.createIndex();
+//        userService.deleteIndex();
+//        userService.addDocument();
+//        userService.bulkAddDocument();
+//        userService.getDocument();
+//        userService.updateDocument();
+//        userService.deleteDocument();
+        userService.searchDocument2();
 
 //        parseHtmlService.parse("小说", 400);
 //        parseHtmlService.parse("Java开发", 30);
@@ -56,7 +57,7 @@ class LearnElasticsearchApplicationTests {
 
 //        bookService.queryBook("刘慈欣", 0, 20);
 
-        bookService.aggregation();
+//        bookService.aggregation();
     }
 
 }
