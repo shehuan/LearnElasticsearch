@@ -3,6 +3,7 @@ package com.sn.elasticsearch.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.sn.elasticsearch.bean.User;
+import org.apache.lucene.search.TotalHits;
 import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -27,7 +28,16 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryRequest;
+import org.elasticsearch.index.reindex.UpdateByQueryRequest;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.range.RangeAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.*;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
@@ -37,6 +47,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -54,8 +65,19 @@ public class UserService {
      */
     public void createIndex() throws IOException {
         CreateIndexRequest request = new CreateIndexRequest("user");
+        CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
+        System.out.println(response.isAcknowledged());
+    }
 
-        // 索引相关配置
+    /**
+     * 创建索引时指定一些配置信息
+     *
+     * @throws IOException
+     */
+    public void createIndex2() throws IOException {
+        CreateIndexRequest request = new CreateIndexRequest("user");
+
+        // 索引分片数量配置
         request.settings(Settings.builder()
                 .put("index.number_of_shards", 2)
                 .put("index.number_of_replicas", 1));
@@ -70,6 +92,7 @@ public class UserService {
         mapping.put("properties", properties);
         request.mapping(mapping);
 
+        // 通过json设置文档字段的映射信息
 //        request.mapping("{\n" +
 //                "   \"properties\": {\n" +
 //                "       \"birthday\": {\n" +
@@ -141,7 +164,6 @@ public class UserService {
      * @throws IOException
      */
     public void bulkAddDocument() throws IOException {
-
         User user1 = new User();
         user1.setName("李四");
         user1.setAge(18);
@@ -195,8 +217,9 @@ public class UserService {
      */
     public boolean existsDocument() throws IOException {
         GetRequest request = new GetRequest("user", "1");
-        // 不获取返回的_source
+        // 不获取_source的内容
         request.fetchSourceContext(new FetchSourceContext(false));
+        // 不获取已排序字段
         request.storedFields("_none_");
         boolean exists = client.exists(request, RequestOptions.DEFAULT);
         return exists;
@@ -226,12 +249,31 @@ public class UserService {
         if (!existsDocument()) {
             return;
         }
-        UpdateRequest updateRequest = new UpdateRequest("user", "1");
+        UpdateRequest request = new UpdateRequest("user", "1");
         User user = new User();
         user.setAge(31);
-        updateRequest.doc(JSON.toJSONString(user), XContentType.JSON);
-        UpdateResponse response = client.update(updateRequest, RequestOptions.DEFAULT);
+        request.doc(JSON.toJSONString(user), XContentType.JSON);
+        UpdateResponse response = client.update(request, RequestOptions.DEFAULT);
         System.out.println(response.status());
+    }
+
+    /**
+     * 根据查询条件批量更新
+     *
+     * @throws IOException
+     */
+    public void updateDocument2() throws IOException {
+        UpdateByQueryRequest request = new UpdateByQueryRequest("user");
+        // 设置查询条件
+        request.setQuery(new TermQueryBuilder("name.keyword", "张三"));
+        // 设置一次可以批处理的文档数，默认1000
+        request.setBatchSize(200);
+        // 更新后刷新索引
+        request.setRefresh(true);
+        // 通过脚本设置如何更新
+        request.setScript(new Script("ctx._source.school = '复旦'"));
+        BulkByScrollResponse response = client.updateByQuery(request, RequestOptions.DEFAULT);
+        System.out.println("修改的文档数：" + response.getStatus().getUpdated());
     }
 
     /**
@@ -249,24 +291,53 @@ public class UserService {
     }
 
     /**
-     * 文档搜索
+     * 根据查询条件批量删除
+     *
+     * @throws IOException
+     */
+    public void deleteDocument2() throws IOException {
+        DeleteByQueryRequest request = new DeleteByQueryRequest("user");
+        // 设置查询条件，查询school是复旦的
+        request.setQuery(new TermQueryBuilder("school.keyword", "复旦"));
+        // 设置一次可以批处理的文档数，默认1000
+        request.setBatchSize(200);
+        // 更新后刷新索引
+        request.setRefresh(true);
+        BulkByScrollResponse response = client.deleteByQuery(request, RequestOptions.DEFAULT);
+        System.out.println("删除的文档数：" + response.getStatus().getDeleted());
+    }
+
+    /**
+     * 文档查询
      *
      * @throws IOException
      */
     public void searchDocument() throws IOException {
         SearchRequest request = new SearchRequest("user");
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-//        searchSourceBuilder.highlighter(new HighlightBuilder().field("name").preTags("<span style='color:red'>").postTags("</span>"));
-//        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("name.keyword", "张三66");
 
+        // school 是清华或北大的
         BoolQueryBuilder schoolQueryBuilder = QueryBuilders.boolQuery()
-                .should(new MatchQueryBuilder("school.keyword", "北大"))
-                .should(new MatchQueryBuilder("school.keyword", "清华"));
+                .should(QueryBuilders.termQuery("school.keyword", "北大"))
+                .should(QueryBuilders.termQuery("school.keyword", "清华"));
 
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
                 .must(schoolQueryBuilder)
-                .must(new RangeQueryBuilder("age").gte(10).lte(50));
+                // name 以王开头的
+                .must(QueryBuilders.matchPhrasePrefixQuery("name", "王"))
+                // age 大于等于10小于等于70
+                .must(QueryBuilders.rangeQuery("age").gte(10).lte(70));
+        // 设置查询条件
         searchSourceBuilder.query(boolQueryBuilder);
+        // 字段过滤
+        String[] includeFields = new String[]{"name", "age", "school"};
+        searchSourceBuilder.fetchSource(includeFields, new String[]{});
+        // 设置高亮
+        HighlightBuilder highlightBuilder = new HighlightBuilder()
+                .field("name")
+                .preTags("<span style='color:red'>")
+                .postTags("</span>");
+        searchSourceBuilder.highlighter(highlightBuilder);
         // 排序
         searchSourceBuilder.sort("age", SortOrder.DESC);
         // 分页
@@ -278,39 +349,13 @@ public class UserService {
         // 发起查询请求
         SearchResponse response = client.search(request, RequestOptions.DEFAULT);
         for (SearchHit hit : response.getHits()) {
-            System.out.println(hit.getSourceAsString());
-        }
-    }
-
-    public void searchDocument2() throws IOException {
-        SearchRequest request = new SearchRequest("user");
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        // 搜索姓王
-        searchSourceBuilder.query(new MatchPhrasePrefixQueryBuilder("name", "王"));
-        // 设置高亮
-        HighlightBuilder highlightBuilder = new HighlightBuilder()
-                .field("name")
-                .preTags("<span style='color:red'>")
-                .postTags("</span>");
-        searchSourceBuilder.highlighter(highlightBuilder);
-
-        searchSourceBuilder.sort("age", SortOrder.DESC);
-        searchSourceBuilder.from(0);
-        searchSourceBuilder.size(20);
-        searchSourceBuilder.timeout(new TimeValue(10, TimeUnit.SECONDS));
-
-        request.source(searchSourceBuilder);
-        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
-        for (SearchHit hit : response.getHits()) {
-            // 高亮的字段内容
+            // 提取高亮的字段内容，因为查询出来的文档数据和高亮字段的数据是分开的
             String highlightName = hit.getHighlightFields().get("name").fragments()[0].toString();
+            // 提取查询出的文档数据，并转成对象
             User user = JSONObject.parseObject(hit.getSourceAsString(), User.class);
+            // 用高亮的字段内容覆盖覆盖原文档字段
             user.setName(highlightName);
             System.out.println(JSON.toJSONString(user));
         }
-    }
-
-    public void searchDocument3() throws IOException {
-
     }
 }

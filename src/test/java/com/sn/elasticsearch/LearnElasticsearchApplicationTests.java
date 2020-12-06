@@ -29,15 +29,15 @@ class LearnElasticsearchApplicationTests {
     BookService bookService;
 
     @Test
-    void contextLoads() throws IOException {
-//        userService.createIndex();
+    void testES() throws IOException {
+//        userService.createIndex2();
 //        userService.deleteIndex();
 //        userService.addDocument();
 //        userService.bulkAddDocument();
 //        userService.getDocument();
-//        userService.updateDocument();
-//        userService.deleteDocument();
-        userService.searchDocument2();
+//        userService.updateDocument2();
+//        userService.deleteDocument2();
+//        userService.searchDocument();
 
 //        parseHtmlService.parse("小说", 400);
 //        parseHtmlService.parse("Java开发", 30);
