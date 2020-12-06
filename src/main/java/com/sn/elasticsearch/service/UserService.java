@@ -36,7 +36,13 @@ import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.BucketOrder;
+import org.elasticsearch.search.aggregations.bucket.filter.Filter;
+import org.elasticsearch.search.aggregations.bucket.filter.FilterAggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.range.Range;
 import org.elasticsearch.search.aggregations.bucket.range.RangeAggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.aggregations.metrics.*;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
@@ -194,7 +200,13 @@ public class UserService {
         user5.setBirthday("1950-07-07");
         user5.setSchool("清华");
 
-        Object[] users = new Object[]{user1, user2, user3, user4, user5};
+        User user6 = new User();
+        user6.setName("王者荣耀");
+        user6.setAge(2);
+        user6.setBirthday("2018-02-02");
+        user6.setSchool("清华");
+
+        Object[] users = new Object[]{user1, user2, user3, user4, user5, user6};
 
         BulkRequest bulkRequest = new BulkRequest();
         bulkRequest.timeout("5s");
@@ -356,6 +368,171 @@ public class UserService {
             // 用高亮的字段内容覆盖覆盖原文档字段
             user.setName(highlightName);
             System.out.println(JSON.toJSONString(user));
+        }
+    }
+
+    public void avg() throws IOException {
+        SearchRequest request = new SearchRequest("user");
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 统计文档中age字段的平均值，avgAge相当于统计结果的名称
+        AvgAggregationBuilder avgBuilder = AggregationBuilders.avg("avgAge").field("age");
+        // 设置聚合查询
+        searchSourceBuilder.aggregation(avgBuilder);
+        request.source(searchSourceBuilder);
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 取出统计结果
+        Avg avg = response.getAggregations().get("avgAge");
+        double value = avg.getValue();
+        System.out.println(value);
+    }
+
+    public void max() throws IOException {
+        SearchRequest request = new SearchRequest("user");
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 统计文档中age字段的最大值
+        MaxAggregationBuilder maxBuilder = AggregationBuilders.max("maxAge").field("age");
+        searchSourceBuilder.aggregation(maxBuilder);
+        request.source(searchSourceBuilder);
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 取出统计结果
+        Max max = response.getAggregations().get("maxAge");
+        double value = max.getValue();
+        System.out.println(value);
+    }
+
+    public void min() throws IOException {
+        MinAggregationBuilder minBuilder = AggregationBuilders.min("minAge").field("age");
+
+        SumAggregationBuilder sumBuilder = AggregationBuilders.sum("sumAge").field("age");
+    }
+
+    public void range() throws IOException {
+        SearchRequest request = new SearchRequest("user");
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 统计文档中age字段的最大值
+        RangeAggregationBuilder rangeBuilder = AggregationBuilders.range("rangeAge")
+                .field("age")
+                .addUnboundedTo(30)//(-∞, 30)
+                .addRange(30, 40)//[30,40]
+                .addUnboundedFrom(40);//(40,+∞)
+        searchSourceBuilder.aggregation(rangeBuilder);
+        request.source(searchSourceBuilder);
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 取出统计结果
+        Range range = response.getAggregations().get("rangeAge");
+        for (Range.Bucket bucket : range.getBuckets()) {
+            // 打印每个区间的人数
+            System.out.println("age区间 " + bucket.getKeyAsString() + " 的人数：" + bucket.getDocCount());
+        }
+    }
+
+    public void filter() throws IOException {
+        SearchRequest request = new SearchRequest("user");
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 统计文档中school是北大的人数
+        // 先构建查询条件
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("school.keyword", "北大");
+        // 设置过滤统计的查询条件
+        FilterAggregationBuilder filterBuilder = AggregationBuilders.filter("count", termQueryBuilder);
+        searchSourceBuilder.aggregation(filterBuilder);
+        request.source(searchSourceBuilder);
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 取出统计结果
+        Filter filter = response.getAggregations().get("count");
+        double value = filter.getDocCount();
+        System.out.println(value);
+    }
+
+
+    public void valueCount() throws IOException {
+        SearchRequest request = new SearchRequest("user");
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 根据文档id统计索引的文档数
+        ValueCountAggregationBuilder valueCountBuilder = AggregationBuilders.count("count").field("_id");
+        searchSourceBuilder.aggregation(valueCountBuilder);
+        request.source(searchSourceBuilder);
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 取出统计结果
+        ValueCount valueCount = response.getAggregations().get("count");
+        double value = valueCount.getValue();
+        System.out.println(value);
+    }
+
+    public void terms() throws IOException {
+        SearchRequest request = new SearchRequest("user");
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 按照school分组
+        TermsAggregationBuilder termsBuilder = AggregationBuilders.terms("schoolGroup")
+                .field("school.keyword")
+                // 按每组的数据量升序排列
+                .order(BucketOrder.aggregation("_count", true))
+                // 最多统计出20组数据
+                .size(20);
+        searchSourceBuilder.aggregation(termsBuilder);
+        request.source(searchSourceBuilder);
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 取出统计结果
+        Terms terms = response.getAggregations().get("schoolGroup");
+        for (Terms.Bucket bucket : terms.getBuckets()) {
+            System.out.println(bucket.getKeyAsString() + " 的人数：" + bucket.getDocCount());
+        }
+    }
+
+    public void sub() throws IOException {
+        SearchRequest request = new SearchRequest("user");
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 按照school分组
+        TermsAggregationBuilder termsBuilder = AggregationBuilders.terms("schoolGroup")
+                .field("school.keyword")
+                // 按每组的数据量升序排列
+                .order(BucketOrder.aggregation("_count", true))
+                // 最多统计出20组数据
+                .size(20)
+                // 添加子统计
+                .subAggregation(AggregationBuilders.min("minAge").field("age"));
+        searchSourceBuilder.aggregation(termsBuilder);
+        request.source(searchSourceBuilder);
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 取出统计结果
+        Terms terms = response.getAggregations().get("schoolGroup");
+        for (Terms.Bucket bucket : terms.getBuckets()) {
+            // 取出子统计的结果
+            Min min = bucket.getAggregations().get("minAge");
+            System.out.println(bucket.getKeyAsString() + " 的人数：" + bucket.getDocCount() + "，age的最小值：" + min.getValue());
+        }
+    }
+
+    public void topHits() throws IOException {
+        SearchRequest request = new SearchRequest("user");
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 跟踪正在参与分组聚合统计的文档数据
+        TopHitsAggregationBuilder topHitsBuilder = AggregationBuilders.topHits("groupData")
+                // 跟踪前20条数据
+                .size(20)
+                // 按age升序排列
+                .sort("age", SortOrder.ASC);
+        // 按照school分组
+        TermsAggregationBuilder termsBuilder = AggregationBuilders.terms("schoolGroup")
+                .field("school.keyword")
+                // 按每组的数据量升序排列
+                .order(BucketOrder.aggregation("_count", true))
+                // 最多统计出20组数据
+                .size(20)
+                // 添加文档数据跟踪
+                .subAggregation(topHitsBuilder);
+        searchSourceBuilder.aggregation(termsBuilder);
+        request.source(searchSourceBuilder);
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 取出统计结果
+        Terms terms = response.getAggregations().get("schoolGroup");
+        for (Terms.Bucket bucket : terms.getBuckets()) {
+            System.out.println(bucket.getKeyAsString() + " 的人数：" + bucket.getDocCount());
+            // 取出topHits跟踪的文档数据
+            TopHits groupData = bucket.getAggregations().get("groupData");
+            for (SearchHit hit : groupData.getHits()) {
+                System.out.println(hit.getSourceAsString());
+            }
+            System.out.println("---------------------------------------------------------------------------");
         }
     }
 }

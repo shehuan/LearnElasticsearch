@@ -38,6 +38,12 @@ class LearnElasticsearchApplicationTests {
 //        userService.updateDocument2();
 //        userService.deleteDocument2();
 //        userService.searchDocument();
+//        userService.avg();
+//        userService.max();
+//        userService.range();
+//        userService.valueCount();
+//        userService.terms();
+        userService.topHits();
 
 //        parseHtmlService.parse("小说", 400);
 //        parseHtmlService.parse("Java开发", 30);
