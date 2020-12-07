@@ -44,7 +44,7 @@ public class BookService {
      * 根据输入的关键字查询书籍
      *
      * @param keyword
-     * @param pageNum
+     * @param pageNum  从1开始
      * @param pageSize
      */
     public void queryBook(String keyword, int pageNum, int pageSize) {
@@ -83,7 +83,7 @@ public class BookService {
 
         NativeSearchQuery nativeSearchQuery = new NativeSearchQueryBuilder()
                 .withQuery(boolQueryBuilder)
-                .withPageable(PageRequest.of(pageNum, pageSize))
+                .withPageable(PageRequest.of(pageNum - 1, pageSize))
                 .withFields("author", "name", "price", "commentCount")
                 .withSort(new FieldSortBuilder("price").order(SortOrder.ASC))
 //                .withHighlightFields(hbfArray)
@@ -98,6 +98,7 @@ public class BookService {
 
         System.out.println("总数据条数：" + search.getTotalHits());
         System.out.println("总页数：" + totalPage);
+        System.out.println("当前页码：" + pageNum);
 
         double avgPrice = ((Avg) search.getAggregations().get("avgPrice")).getValue();
         System.out.println("搜索到的书籍均价：" + avgPrice);
@@ -107,12 +108,10 @@ public class BookService {
                 // 提取高亮字段
                 searchHit.getContent().setAuthor(searchHit.getHighlightFields().get("author").get(0));
             }
-
             if (searchHit.getHighlightFields().containsKey("name")) {
                 // 提取高亮字段
                 searchHit.getContent().setName(searchHit.getHighlightFields().get("name").get(0));
             }
-
             System.out.println(JSONObject.toJSONString(searchHit.getContent()));
         }
     }
@@ -137,7 +136,7 @@ public class BookService {
         HighlightQuery highlightQuery = new HighlightQuery(highlightBuilder);
 
         NativeSearchQuery nativeSearchQuery = new NativeSearchQuery(boolQueryBuilder);
-        nativeSearchQuery.setPageable(PageRequest.of(pageNum, pageSize));
+        nativeSearchQuery.setPageable(PageRequest.of(pageNum - 1, pageSize));
         nativeSearchQuery.addFields("name", "price", "commentCount", "author");
         nativeSearchQuery.addSort(Sort.by("price").ascending());
         nativeSearchQuery.setHighlightQuery(highlightQuery);
@@ -160,6 +159,7 @@ public class BookService {
         double minPrice = ((Min) search.getAggregations().get("minPrice")).getValue();
         System.out.println("搜索到的书籍均价：" + avgPrice);
         System.out.println("搜索到的书籍最低价：" + minPrice);
+        System.out.println("当前页码：" + pageNum);
 
         for (SearchHit<Book> searchHit : search.getSearchHits()) {
             if (searchHit.getHighlightFields().containsKey("author")) {

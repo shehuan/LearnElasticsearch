@@ -38,11 +38,13 @@ public class BookParseService {
             }
             fileWriter = new FileWriter(file, true);
 
+            // 循环翻页
             while (page <= maxPage) {
                 // 搜索书籍的地址
                 String searchUrl = "https://search.jd.com/Search?keyword=" + keyword + "&page=" + page + "&s=1&click=0";
                 Document document;
                 try {
+                    // 通过jsoup请求书籍数据
                     document = Jsoup.connect(searchUrl).timeout(60 * 1000).headers(headers).get();
                 } catch (Exception e) {
                     continue;
@@ -52,6 +54,7 @@ public class BookParseService {
                     break;
                 }
                 bookMap = new HashMap<>();
+                // 保存请求评论数的参数
                 StringBuilder referenceIds = new StringBuilder();
                 for (Element item : list) {
                     // 书名
@@ -91,10 +94,11 @@ public class BookParseService {
                     referenceIds.append(skuId).append(",");
                 }
 
-                // 请求评论数
+                // 请求评论数的地址
                 String commentUrl = "https://club.jd.com/comment/productCommentSummaries.action?referenceIds=" + referenceIds;
                 String body = "";
                 try {
+                    // 通过jsoup请求评论数据
                     body = Jsoup.connect(commentUrl).timeout(60 * 1000).headers(headers).get().body().text();
                 } catch (Exception e) {
                     continue;
@@ -116,9 +120,10 @@ public class BookParseService {
                 }
 
                 total += list.size();
-                System.out.println("page==" + page);
-                System.out.println("已采集数据条数==" + total);
+                System.out.println("采集完成的页数：" + page);
+                System.out.println("已采集数据条数：" + total);
                 ++page;
+                // 休眠2秒再翻页
                 Thread.sleep(2 * 1000);
             }
         } catch (Exception e) {
