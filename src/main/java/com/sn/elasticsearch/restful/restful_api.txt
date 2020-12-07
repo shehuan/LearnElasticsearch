@@ -512,13 +512,13 @@ GET _analyze
 GET _analyze
 {
   "analyzer": "ik_smart",
-  "text": "索检文全"
+  "text": "唐家三少"
 }
 
 GET _analyze
 {
   "analyzer": "ik_smart",
-  "text": "擎引索搜"
+  "text": "南派三叔"
 }
 
 PUT test
@@ -554,12 +554,12 @@ POST test/_doc
 
 POST test/_doc
 {
-  "content": "索检文全"
+  "content": "唐家三少"
 }
 
 POST test/_doc
 {
-  "content": "擎引索搜"
+  "content": "南派三叔"
 }
 
 GET test/_search
@@ -584,7 +584,7 @@ GET test/_search
 {
   "query": {
     "match": {
-      "content": "索检文全"
+      "content": "唐家三少"
     }
   }
 }
