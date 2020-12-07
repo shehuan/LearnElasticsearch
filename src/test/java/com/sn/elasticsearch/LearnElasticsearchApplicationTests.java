@@ -2,8 +2,8 @@ package com.sn.elasticsearch;
 
 import com.sn.elasticsearch.service.BookService;
 import com.sn.elasticsearch.service.UserService;
-import com.sn.elasticsearch.service.FileService;
-import com.sn.elasticsearch.service.ParseHtmlService;
+import com.sn.elasticsearch.service.BookFileService;
+import com.sn.elasticsearch.service.BookParseService;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +20,10 @@ class LearnElasticsearchApplicationTests {
     UserService userService;
 
     @Autowired
-    ParseHtmlService parseHtmlService;
+    BookParseService bookParseService;
 
     @Autowired
-    FileService fileService;
+    BookFileService bookFileService;
 
     @Autowired
     BookService bookService;
@@ -43,27 +43,24 @@ class LearnElasticsearchApplicationTests {
 //        userService.range();
 //        userService.valueCount();
 //        userService.terms();
-        userService.topHits();
+//        userService.topHits();
 
-//        parseHtmlService.parse("小说", 400);
-//        parseHtmlService.parse("Java开发", 30);
-//        parseHtmlService.parse("Android开发", 20);
-//        parseHtmlService.parse("iOS开发", 20);
-//        parseHtmlService.parse("Python开发", 20);
-//        parseHtmlService.parse("前端开发", 20);
-//        parseHtmlService.parse("诗词", 30);
-//        parseHtmlService.parse("法律", 30);
-//        parseHtmlService.parse("军事", 30);
-//        parseHtmlService.parse("经济", 30);
-//        parseHtmlService.parse("历史", 30);
+//        bookParseService.parse("小说", 400);
+//        bookParseService.parse("Java开发", 30);
+//        bookParseService.parse("Android开发", 20);
+//        bookParseService.parse("iOS开发", 20);
+//        bookParseService.parse("Python开发", 20);
+//        bookParseService.parse("前端开发", 20);
+//        bookParseService.parse("诗词", 30);
+//        bookParseService.parse("法律", 30);
+//        bookParseService.parse("军事", 30);
+//        bookParseService.parse("经济", 30);
+//        bookParseService.parse("历史", 30);
 
-//        fileService.removeSameData();
-
-//        fileService.writeFileDataToES();
-
-//        bookService.queryBook("刘慈欣", 0, 20);
-
-//        bookService.aggregation();
+//        bookFileService.removeSameBookData();
+//        bookFileService.writeBookDataToES();
+//
+        bookService.queryBook("刘慈欣", 0, 20);
     }
 
 }

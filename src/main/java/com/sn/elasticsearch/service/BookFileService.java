@@ -11,11 +11,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Service
-public class FileService {
+public class BookFileService {
     @Autowired
     BookService bookService;
 
-    public void writeFileDataToES() {
+    /**
+     * 将去重后的数据写入 ES
+     */
+    public void writeBookDataToES() {
         String filePath = System.getProperty("user.dir") + File.separator + "jd_book2.txt";
 
         FileReader fileReader = null;
@@ -49,7 +52,10 @@ public class FileService {
         }
     }
 
-    public void removeSameData() {
+    /**
+     * 根据 skuId 将采集到的原始数据去重
+     */
+    public void removeSameBookData() {
         String filePath = System.getProperty("user.dir") + File.separator + "jd_book.txt";
 
         FileReader fileReader = null;
@@ -61,7 +67,7 @@ public class FileService {
             Set<String> skuIdSet = new HashSet<>();
 
             File file = new File(System.getProperty("user.dir"), "jd_book2.txt");
-            if (file.exists()){
+            if (file.exists()) {
                 file.delete();
             }
             file.createNewFile();

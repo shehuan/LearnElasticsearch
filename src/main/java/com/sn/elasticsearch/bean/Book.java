@@ -1,17 +1,33 @@
 package com.sn.elasticsearch.bean;
 
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 
 @Document(indexName = "book")
 public class Book {
     private String id;
+
+    @Field(type = FieldType.Keyword)
     private String skuId;
+
+    @Field(type = FieldType.Text, analyzer = "ik_max_word")
     private String name;
+
+    @Field(type = FieldType.Text, analyzer = "ik_max_word")
     private String author;
-    private Double price;
+
+    private Float price;
+
+    @Field(type = FieldType.Integer)
     private Integer commentCount;
+
+    @Field(type = FieldType.Text, analyzer = "ik_max_word")
     private String shop;
+
+    @Field(type = FieldType.Text, analyzer = "ik_max_word")
     private String publisher;
+
     private String img;
 
     public String getId() {
@@ -46,11 +62,11 @@ public class Book {
         this.author = author;
     }
 
-    public Double getPrice() {
+    public Float getPrice() {
         return price;
     }
 
-    public void setPrice(Double price) {
+    public void setPrice(Float price) {
         this.price = price;
     }
 

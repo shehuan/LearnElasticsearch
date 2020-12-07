@@ -5,15 +5,12 @@ import com.sn.elasticsearch.bean.Book;
 import com.sn.elasticsearch.repository.BookRepository;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.script.Script;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.BucketOrder;
-import org.elasticsearch.search.aggregations.bucket.range.Range;
-import org.elasticsearch.search.aggregations.bucket.range.RangeAggregationBuilder;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
-import org.elasticsearch.search.aggregations.metrics.*;
+import org.elasticsearch.search.aggregations.metrics.Avg;
+import org.elasticsearch.search.aggregations.metrics.AvgAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.Min;
+import org.elasticsearch.search.aggregations.metrics.MinAggregationBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -43,12 +40,92 @@ public class BookService {
         elasticsearchRestTemplate.save(books);
     }
 
+    /**
+     * 根据输入的关键字查询书籍
+     *
+     * @param keyword
+     * @param pageNum
+     * @param pageSize
+     */
     public void queryBook(String keyword, int pageNum, int pageSize) {
+
+        BoolQueryBuilder keywordQueryBuilder = QueryBuilders.boolQuery()
+                .should(QueryBuilders.matchPhraseQuery("author", keyword).analyzer("ik_smart"))
+                .should(QueryBuilders.matchPhraseQuery("name", keyword).analyzer("ik_smart"));
+
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
-                .must(QueryBuilders.boolQuery().should(QueryBuilders.matchPhraseQuery("author", keyword))
-                        .should(QueryBuilders.matchPhraseQuery("name", keyword)))
-//                boolQueryBuilder.must(new MatchPhraseQueryBuilder("name", keyword))
-                .must(QueryBuilders.rangeQuery("commentCount").gte(100));
+                .must(keywordQueryBuilder)
+                .must(QueryBuilders.rangeQuery("commentCount").gte(10));
+
+//        HighlightBuilder.Field hbf1 = new HighlightBuilder.Field("author")
+//                .preTags("<span style='color:red'>")
+//                .postTags("</span>")
+//                .fragmentSize(10000)
+//                .numOfFragments(0);
+//
+//        HighlightBuilder.Field hbf2 = new HighlightBuilder.Field("name")
+//                .preTags("<span style='color:green'>")
+//                .postTags("</span>")
+//                .fragmentSize(10000)
+//                .numOfFragments(0);
+
+//        HighlightBuilder.Field[] hbfArray = new HighlightBuilder.Field[]{hbf1, hbf2};
+
+        HighlightBuilder highlightBuilder = new HighlightBuilder()
+                .field("author").field("name")
+                .preTags("<span style='color:red'>")
+                .postTags("</span>")
+                // 如果要高亮显示的字段内容很多,需要如下配置,避免高亮显示不全、内容缺失
+                .fragmentSize(1000) // 最大高亮分片数
+                .numOfFragments(0);// 从第一个分片获取高亮片段
+
+        AvgAggregationBuilder priceAvgAggregation = AggregationBuilders.avg("avgPrice").field("price");
+
+        NativeSearchQuery nativeSearchQuery = new NativeSearchQueryBuilder()
+                .withQuery(boolQueryBuilder)
+                .withPageable(PageRequest.of(pageNum, pageSize))
+                .withFields("author", "name", "price", "commentCount")
+                .withSort(new FieldSortBuilder("price").order(SortOrder.ASC))
+//                .withHighlightFields(hbfArray)
+                .withHighlightBuilder(highlightBuilder)
+                .addAggregation(priceAvgAggregation)
+                .build();
+
+        SearchHits<Book> search = elasticsearchRestTemplate.search(nativeSearchQuery, Book.class);
+
+        long totalHits = search.getTotalHits();
+        long totalPage = (totalHits % pageSize == 0) ? totalHits / pageSize : totalHits / pageSize + 1;
+
+        System.out.println("总数据条数：" + search.getTotalHits());
+        System.out.println("总页数：" + totalPage);
+
+        double avgPrice = ((Avg) search.getAggregations().get("avgPrice")).getValue();
+        System.out.println("搜索到的书籍均价：" + avgPrice);
+
+        for (SearchHit<Book> searchHit : search.getSearchHits()) {
+            if (searchHit.getHighlightFields().containsKey("author")) {
+                // 提取高亮字段
+                searchHit.getContent().setAuthor(searchHit.getHighlightFields().get("author").get(0));
+            }
+
+            if (searchHit.getHighlightFields().containsKey("name")) {
+                // 提取高亮字段
+                searchHit.getContent().setName(searchHit.getHighlightFields().get("name").get(0));
+            }
+
+            System.out.println(JSONObject.toJSONString(searchHit.getContent()));
+        }
+    }
+
+    public void queryBook2(String keyword, int pageNum, int pageSize) {
+
+        BoolQueryBuilder keywordQueryBuilder = QueryBuilders.boolQuery()
+                .should(QueryBuilders.matchPhraseQuery("author", keyword).analyzer("ik_smart"))
+                .should(QueryBuilders.matchPhraseQuery("name", keyword).analyzer("ik_smart"));
+
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
+                .must(keywordQueryBuilder)
+                .must(QueryBuilders.rangeQuery("commentCount").gte(10));
 
         HighlightBuilder highlightBuilder = new HighlightBuilder()
                 .field("author").field("name")
@@ -65,20 +142,24 @@ public class BookService {
         nativeSearchQuery.addSort(Sort.by("price").ascending());
         nativeSearchQuery.setHighlightQuery(highlightQuery);
 
-        AvgAggregationBuilder priceAvgAggregation = AggregationBuilders.avg("avg_price").field("price");
+        AvgAggregationBuilder priceAvgAggregation = AggregationBuilders.avg("avgPrice").field("price");
+        MinAggregationBuilder priceMinAggregation = AggregationBuilders.min("minPrice").field("price");
         List<AbstractAggregationBuilder> aggregations = new ArrayList<>();
         aggregations.add(priceAvgAggregation);
+        aggregations.add(priceMinAggregation);
         nativeSearchQuery.setAggregations(aggregations);
 
         SearchHits<Book> search = elasticsearchRestTemplate.search(nativeSearchQuery, Book.class);
         long totalHits = search.getTotalHits();
         long totalPage = (totalHits % pageSize == 0) ? totalHits / pageSize : totalHits / pageSize + 1;
 
-        System.out.println("命中数据条数：" + search.getTotalHits());
+        System.out.println("总数据条数：" + search.getTotalHits());
         System.out.println("总页数：" + totalPage);
 
-        double avgPrice = ((Avg) search.getAggregations().get("avg_price")).getValue();
+        double avgPrice = ((Avg) search.getAggregations().get("avgPrice")).getValue();
+        double minPrice = ((Min) search.getAggregations().get("minPrice")).getValue();
         System.out.println("搜索到的书籍均价：" + avgPrice);
+        System.out.println("搜索到的书籍最低价：" + minPrice);
 
         for (SearchHit<Book> searchHit : search.getSearchHits()) {
             if (searchHit.getHighlightFields().containsKey("author")) {
@@ -90,120 +171,7 @@ public class BookService {
             }
 
             System.out.println(JSONObject.toJSONString(searchHit.getContent()));
-        }
-    }
-
-    public void queryBook2(String keyword, int pageNum, int pageSize) {
-        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
-                .must(QueryBuilders.boolQuery().should(QueryBuilders.matchPhraseQuery("author", keyword))
-                        .should(QueryBuilders.matchPhraseQuery("name", keyword)))
-//                boolQueryBuilder.must(new MatchPhraseQueryBuilder("name", keyword))
-                .must(QueryBuilders.rangeQuery("commentCount").gte(100));
-
-        HighlightBuilder.Field hbf1 = new HighlightBuilder.Field("author")
-                .preTags("<span style='color:red'>")
-                .postTags("</span>")
-                .fragmentSize(10000)
-                .numOfFragments(0);
-
-        HighlightBuilder.Field hbf2 = new HighlightBuilder.Field("name")
-                .preTags("<span style='color:red'>")
-                .postTags("</span>")
-                .fragmentSize(10000)
-                .numOfFragments(0);
-
-        HighlightBuilder.Field[] hbfArray = new HighlightBuilder.Field[]{hbf1, hbf2};
-
-        HighlightBuilder highlightBuilder = new HighlightBuilder()
-                .field("author").field("name")
-                .preTags("<p>", "<span style='color:red'>")
-                .postTags("</p>", "</span>")
-                // 如果要高亮显示的字段内容很多,需要如下配置,避免高亮显示不全、内容缺失
-                .fragmentSize(1000) // 最大高亮分片数
-                .numOfFragments(0);// 从第一个分片获取高亮片段
-
-        NativeSearchQuery nativeSearchQuery = new NativeSearchQueryBuilder()
-                .withQuery(boolQueryBuilder)
-                .withPageable(PageRequest.of(pageNum, pageSize))
-                .withFields("author", "name", "price", "commentCount")
-                .withSort(new FieldSortBuilder("price").order(SortOrder.ASC))
-//                .withHighlightFields(hbfArray)
-                .withHighlightBuilder(highlightBuilder)
-                .build();
-
-        SearchHits<Book> search = elasticsearchRestTemplate.search(nativeSearchQuery, Book.class);
-
-        long totalHits = search.getTotalHits();
-        long totalPage = (totalHits % pageSize == 0) ? totalHits / pageSize : totalHits / pageSize + 1;
-
-        System.out.println("命中数据条数：" + search.getTotalHits());
-        System.out.println("总页数：" + totalPage);
-
-        for (SearchHit<Book> searchHit : search.getSearchHits()) {
-            if (searchHit.getHighlightFields().containsKey("author")) {
-                searchHit.getContent().setAuthor(searchHit.getHighlightFields().get("author").get(0));
-            }
-
-            if (searchHit.getHighlightFields().containsKey("name")) {
-                searchHit.getContent().setName(searchHit.getHighlightFields().get("name").get(0));
-            }
-
-            System.out.println(JSONObject.toJSONString(searchHit.getContent()));
-        }
-    }
-
-    public void aggregation() {
-        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery().mustNot(QueryBuilders.matchQuery("author.keyword", ""));
-        NativeSearchQuery nativeSearchQuery = new NativeSearchQuery(boolQueryBuilder);
-        // 根据作者姓名进行分组统计，统计出的别名叫group_author
-        TermsAggregationBuilder termsAggregationBuilder = AggregationBuilders.terms("group_author").field("author.keyword");
-        // 统计组内书籍的均价
-        AvgAggregationBuilder avgAggregationBuilder = AggregationBuilders.avg("avg_price").field("price");
-        // 统计组内书籍的最高价
-        MaxAggregationBuilder maxAggregationBuilder = AggregationBuilders.max("max_price").field("price");
-        // 统计组内书籍的最低价
-        MinAggregationBuilder minAggregationBuilder = AggregationBuilders.min("min_price").field("price");
-        // 统计组内书籍的数量
-        ValueCountAggregationBuilder valueCountAggregationBuilder = AggregationBuilders.count("book_count").field("author.keyword");
-        // 统计组内在各个评论数区间的书籍数量
-        RangeAggregationBuilder rangeAggregationBuilder = AggregationBuilders.range("comment_count")
-                .field("commentCount")
-                .addUnboundedTo(100)//(0, 100)
-                .addRange(100, 1000)//[100,1000]
-                .addUnboundedFrom(1000);//(100,+∞)
-        termsAggregationBuilder.subAggregation(avgAggregationBuilder);
-        termsAggregationBuilder.subAggregation(maxAggregationBuilder);
-        termsAggregationBuilder.subAggregation(minAggregationBuilder);
-        termsAggregationBuilder.subAggregation(valueCountAggregationBuilder);
-        termsAggregationBuilder.subAggregation(rangeAggregationBuilder);
-        termsAggregationBuilder
-                .order(BucketOrder.aggregation("book_count", false))// 按照每组的书籍数量降序排列
-                .size(1000);// 最多统计1000组
-
-        List<AbstractAggregationBuilder> aggregations = new ArrayList<>();
-        aggregations.add(termsAggregationBuilder);
-        nativeSearchQuery.setAggregations(aggregations);
-        SearchHits<Book> search = elasticsearchRestTemplate.search(nativeSearchQuery, Book.class);
-
-        Terms terms = search.getAggregations().get("group_author");
-
-        for (Terms.Bucket bucket : terms.getBuckets()) {
-            Avg avg = bucket.getAggregations().get("avg_price");
-            Max max = bucket.getAggregations().get("max_price");
-            Min min = bucket.getAggregations().get("min_price");
-            ValueCount count = bucket.getAggregations().get("book_count");
-            Range range = bucket.getAggregations().get("comment_count");
-
-            System.out.println("作者：" + bucket.getKeyAsString() + "\n" +
-                    "书籍数量：" + bucket.getDocCount() + "\n" +
-                    "均价：" + avg.getValue() + "\n" +
-                    "最高价：" + max.getValue() + "\n" +
-                    "最低价：" + min.getValue());
-
-            for (Range.Bucket rangeBucket : range.getBuckets()) {
-                System.out.println("评论数区间：" + rangeBucket.getKeyAsString() + "的作品数" + rangeBucket.getDocCount());
-            }
-            System.out.println("--------------------------------------------");
+            System.out.println("\n");
         }
     }
 }
