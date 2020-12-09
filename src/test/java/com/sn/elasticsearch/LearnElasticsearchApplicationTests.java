@@ -59,7 +59,7 @@ class LearnElasticsearchApplicationTests {
 
 //        bookFileService.removeSameBookData();
 //        bookFileService.writeBookDataToES();
-//
+
         bookService.queryBook("刘慈欣", 1, 10);
 //        bookService.queryBook("唐家三少", 0, 10);
     }
