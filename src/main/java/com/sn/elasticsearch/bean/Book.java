@@ -28,6 +28,7 @@ public class Book {
     @Field(type = FieldType.Text, analyzer = "ik_max_word")
     private String publisher;
 
+    @Field(type = FieldType.Keyword)
     private String img;
 
     public String getId() {
