@@ -42,7 +42,7 @@ public class BookService {
      * 创建索引
      */
     public void createIndex() {
-        // 和数据实体类绑定
+        // 指定文档的数据实体类
         IndexOperations indexOperations = elasticsearchRestTemplate.indexOps(Book.class);
         // 创建索引
         indexOperations.create();
@@ -68,11 +68,11 @@ public class BookService {
      * @param pageNum  从1开始
      * @param pageSize
      */
-    public void queryBook(String keyword, int pageNum, int pageSize) {
+    public List<Book> queryBook(String keyword, int pageNum, int pageSize) {
 
         BoolQueryBuilder keywordQueryBuilder = QueryBuilders.boolQuery()
-                .should(QueryBuilders.matchPhraseQuery("author", keyword).analyzer("ik_smart"))
-                .should(QueryBuilders.matchPhraseQuery("name", keyword).analyzer("ik_smart"));
+                .should(QueryBuilders.matchPhraseQuery("author", keyword))
+                .should(QueryBuilders.matchPhraseQuery("name", keyword));
 
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
                 .must(keywordQueryBuilder)
@@ -124,24 +124,29 @@ public class BookService {
         double avgPrice = ((Avg) search.getAggregations().get("avgPrice")).getValue();
         System.out.println("搜索到的书籍均价：" + avgPrice);
 
+        List<Book> resultList = new ArrayList<>();
         for (SearchHit<Book> searchHit : search.getSearchHits()) {
+            Book book = searchHit.getContent();
             if (searchHit.getHighlightFields().containsKey("author")) {
                 // 提取高亮字段
-                searchHit.getContent().setAuthor(searchHit.getHighlightFields().get("author").get(0));
+                book.setAuthor(searchHit.getHighlightFields().get("author").get(0));
             }
             if (searchHit.getHighlightFields().containsKey("name")) {
                 // 提取高亮字段
-                searchHit.getContent().setName(searchHit.getHighlightFields().get("name").get(0));
+                book.setName(searchHit.getHighlightFields().get("name").get(0));
             }
-            System.out.println(JSONObject.toJSONString(searchHit.getContent()));
+            resultList.add(book);
+            System.out.println(JSONObject.toJSONString(book));
         }
+
+        return resultList;
     }
 
     public void queryBook2(String keyword, int pageNum, int pageSize) {
 
         BoolQueryBuilder keywordQueryBuilder = QueryBuilders.boolQuery()
-                .should(QueryBuilders.matchPhraseQuery("author", keyword).analyzer("ik_smart"))
-                .should(QueryBuilders.matchPhraseQuery("name", keyword).analyzer("ik_smart"));
+                .should(QueryBuilders.matchPhraseQuery("author", keyword))
+                .should(QueryBuilders.matchPhraseQuery("name", keyword));
 
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
                 .must(keywordQueryBuilder)
@@ -194,5 +199,13 @@ public class BookService {
             System.out.println(JSONObject.toJSONString(searchHit.getContent()));
             System.out.println("\n");
         }
+    }
+
+    public void deleteBook(String keyword) {
+
+    }
+
+    public void updateBook() {
+
     }
 }
