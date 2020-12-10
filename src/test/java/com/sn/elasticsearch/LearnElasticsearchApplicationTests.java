@@ -57,10 +57,12 @@ class LearnElasticsearchApplicationTests {
 //        bookParseService.parse("经济", 30);
 //        bookParseService.parse("历史", 30);
 
+        bookService.createIndex();
+
 //        bookFileService.removeSameBookData();
 //        bookFileService.writeBookDataToES();
 
-        bookService.queryBook("刘慈欣", 1, 10);
+//        bookService.queryBook("刘慈欣", 1, 10);
 //        bookService.queryBook("唐家三少", 0, 10);
     }
 }
