@@ -57,12 +57,20 @@ class LearnElasticsearchApplicationTests {
 //        bookParseService.parse("经济", 30);
 //        bookParseService.parse("历史", 30);
 
-//        bookService.createIndex();
+        bookService.createIndex();
 
 //        bookFileService.removeSameBookData();
-//        bookFileService.writeBookDataToES();
+        bookFileService.writeBookDataToES();
 
-        bookService.queryBook("刘慈欣", 1, 10);
-//        bookService.queryBook("唐家三少", 0, 10);
+//        bookService.queryBook("刘慈欣", 1, 10);
+//        bookService.queryBook("唐家三少", 1, 10);
+//        bookService.queryBookById("ldqWUHYBd-rjPYViZ_rT");
+
+//        bookService.deleteBookById("oNqWUHYBd-rjPYViZ_rT");
+//        bookService.deleteBookBySkuId("54773489482");
+
+//        bookService.updateBookById("lNqWUHYBd-rjPYViZ_rT");
+//        bookService.bulkUpdateBook("lNqWUHYBd-rjPYViZ_rT", "ldqWUHYBd-rjPYViZ_rT", "ltqWUHYBd-rjPYViZ_rT");
+
     }
 }

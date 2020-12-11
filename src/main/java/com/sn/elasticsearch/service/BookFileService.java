@@ -52,6 +52,40 @@ public class BookFileService {
         }
     }
 
+    public void writeBookDataToES2() {
+        String filePath = System.getProperty("user.dir") + File.separator + "jd_book2.txt";
+
+        FileReader fileReader = null;
+        BufferedReader bufferedReader = null;
+        try {
+            fileReader = new FileReader(filePath);
+            bufferedReader = new BufferedReader(fileReader);
+            String line;
+            ArrayList<String> books = new ArrayList<>();
+            while ((line = bufferedReader.readLine()) != null) {
+                books.add(line);
+                if (books.size() >= 500) {
+                    bookService.bulkAddBook2(books);
+                    books.clear();
+                }
+            }
+            bookService.bulkAddBook2(books);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (bufferedReader != null) {
+                    bufferedReader.close();
+                }
+                if (fileReader != null) {
+                    fileReader.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     /**
      * 根据 skuId 将采集到的原始数据去重
      */
