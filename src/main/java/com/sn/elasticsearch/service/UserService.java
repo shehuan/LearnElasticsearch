@@ -27,6 +27,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchPhraseQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
@@ -274,7 +275,8 @@ public class UserService {
     public void updateDocument2() throws IOException {
         UpdateByQueryRequest request = new UpdateByQueryRequest("user");
         // 设置查询条件
-        request.setQuery(new TermQueryBuilder("name.keyword", "张三"));
+        request.setQuery(new MatchPhraseQueryBuilder("name", "张三"));
+//        request.setQuery(new TermQueryBuilder("name.keyword", "张三"));
         // 设置一次可以批处理的文档数，默认1000
         request.setBatchSize(200);
         // 更新后刷新索引
@@ -308,6 +310,7 @@ public class UserService {
         DeleteByQueryRequest request = new DeleteByQueryRequest("user");
         // 设置查询条件，查询school是复旦的
         request.setQuery(new TermQueryBuilder("school.keyword", "复旦"));
+//        request.setQuery(new MatchPhraseQueryBuilder("school", "复旦"));
         // 设置一次可以批处理的文档数，默认1000
         request.setBatchSize(200);
         // 更新后刷新索引

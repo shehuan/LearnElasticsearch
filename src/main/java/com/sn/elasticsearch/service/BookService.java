@@ -52,6 +52,15 @@ public class BookService {
     }
 
     /**
+     * 删除索引
+     */
+    public void deleteIndex() {
+        IndexOperations indexOperations = elasticsearchRestTemplate.indexOps(Book.class);
+        boolean result = indexOperations.delete();
+        System.out.println(result);
+    }
+
+    /**
      * 添加数据
      *
      * @param books
