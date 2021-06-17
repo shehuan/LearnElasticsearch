@@ -16,10 +16,7 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
-import org.springframework.data.elasticsearch.core.IndexOperations;
-import org.springframework.data.elasticsearch.core.SearchHit;
-import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.*;
 import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.*;
@@ -289,5 +286,64 @@ public class BookService {
             updateQueryList.add(updateQuery);
         }
         elasticsearchRestTemplate.bulkUpdate(updateQueryList, IndexCoordinates.of("book"));
+    }
+
+    public void search() {
+        // 记录页码
+        int page = 0;
+        // 记录已经查询到总数据量
+        long total = 0;
+
+        while (true) {
+            NativeSearchQuery nativeSearchQuery = new NativeSearchQueryBuilder()
+                    .withPageable(PageRequest.of(page, 1000))
+                    .withSort(new FieldSortBuilder("commentCount").order(SortOrder.DESC))
+                    .build();
+
+            SearchHits<Book> searchHits = elasticsearchRestTemplate.search(nativeSearchQuery, Book.class);
+
+            if (!searchHits.hasSearchHits()) {
+                break;
+            }
+
+            for (SearchHit<Book> searchHit : searchHits.getSearchHits()) {
+                Book book = searchHit.getContent();
+            }
+
+            page++;
+
+            System.out.println(page);
+            System.out.println(total += searchHits.getSearchHits().size());
+        }
+    }
+
+    public void scrollSearch() {
+        // 记录已经查询到总数据量
+        long total = 0;
+
+        NativeSearchQuery nativeSearchQuery = new NativeSearchQueryBuilder()
+                .withSort(new FieldSortBuilder("commentCount").order(SortOrder.DESC))
+                .build();
+        nativeSearchQuery.setMaxResults(1000);
+
+        long scrollTimeInMillis = 60 * 1000;
+
+        SearchScrollHits<Book> searchScrollHits = elasticsearchRestTemplate.searchScrollStart(scrollTimeInMillis, nativeSearchQuery, Book.class, IndexCoordinates.of("book"));
+        String scrollId = searchScrollHits.getScrollId();
+
+        while (searchScrollHits.hasSearchHits()) {
+            System.out.println(total += searchScrollHits.getSearchHits().size());
+
+            for (SearchHit<Book> searchHit : searchScrollHits.getSearchHits()) {
+                Book book = searchHit.getContent();
+            }
+
+            searchScrollHits = elasticsearchRestTemplate.searchScrollContinue(scrollId, scrollTimeInMillis, Book.class, IndexCoordinates.of("book"));
+            scrollId = searchScrollHits.getScrollId();
+        }
+
+        List<String> scrollIds = new ArrayList<>();
+        scrollIds.add(scrollId);
+        elasticsearchRestTemplate.searchScrollClear(scrollIds);
     }
 }

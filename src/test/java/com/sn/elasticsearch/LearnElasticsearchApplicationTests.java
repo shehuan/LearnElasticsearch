@@ -73,5 +73,6 @@ class LearnElasticsearchApplicationTests {
 //        bookService.updateBookById("lNqWUHYBd-rjPYViZ_rT");
 //        bookService.bulkUpdateBook("lNqWUHYBd-rjPYViZ_rT", "ldqWUHYBd-rjPYViZ_rT", "ltqWUHYBd-rjPYViZ_rT");
 
+        bookService.scrollSearch();
     }
 }
